@@ -1,0 +1,30 @@
+---
+version: '3'
+
+dotenv: ['.env.{{.TG_ENV}}.aws', '.env.{{.TG_ENV}}.terraform']
+
+includes:
+    common:
+        taskfile: ./DevEx/taskfile/Taskfile.common.yml
+
+tasks:
+  #-----------------------------------------------------------------------------------------
+  # GENERIC TASKS
+  #-----------------------------------------------------------------------------------------
+    default:
+        cmds:
+            - task: common:default
+
+    pre-commit-init:
+        desc: Initialize and install required hooks
+        cmds:
+            - task: common:hooks-install
+
+    pre-commit:
+        desc: Run all the pre-configured pre-commit hooks.
+        cmds:
+            - task: common:hooks
+
+  #-----------------------------------------------------------------------------------------
+  # OPINIONATED TASKS
+  #-----------------------------------------------------------------------------------------
