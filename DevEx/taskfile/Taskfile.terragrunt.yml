@@ -37,7 +37,7 @@ tasks:
 
     init:
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TG_WORKING_DIR: '{{.TG_WORKING_DIR}}'}
         desc: Run Terragrunt init
         cmds:
@@ -130,7 +130,7 @@ tasks:
     lint:
         desc: Run Terragrunt Linters and Validators
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TG_WORKING_DIR: '{{.TG_WORKING_DIR}}'}
         cmds:
             - |

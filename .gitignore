@@ -25,3 +25,8 @@
 # Dev builds
 **/build/
 **/dist/
+
+# python commonly ignored files.
+*.py[cod]
+*.egg
+*.egg-info

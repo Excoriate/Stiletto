@@ -45,7 +45,7 @@ tasks:
 
     init:
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         desc: Run Terraform init
         cmds:
@@ -163,7 +163,7 @@ tasks:
     fmt:
         desc: Run Terraform fmt check
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
@@ -188,7 +188,7 @@ tasks:
     fmt-fix:
         desc: Run Terraform fmt fixing the non-formatted files
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
@@ -237,7 +237,7 @@ tasks:
     lint:
         desc: Run Terraform lint
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |
@@ -269,7 +269,7 @@ tasks:
     docs:
         desc: Generate Terraform docs
         deps:
-            - task: check-workdir
+            - task: check-filesystem
               vars: {TF_WORKING_DIR: '{{.TF_WORKING_DIR}}'}
         cmds:
             - |

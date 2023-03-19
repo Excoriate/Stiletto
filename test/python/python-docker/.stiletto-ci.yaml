@@ -1,0 +1,13 @@
+---
+pipeline: my-cli
+global:
+    workdir: my_dir/here
+    env: [CI=true]
+
+tasks:
+    - name: Run docker build # optional.
+      action: docker::build # each built-in action is separated by ::
+      with:
+          - docker build -t my-image .
+          - docker run my-image
+#   env: ["CI=true" ]
