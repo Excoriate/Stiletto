@@ -1,26 +1,25 @@
 package logger
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/Excoriate/stiletto/internal/common"
+	"github.com/hashicorp/go-hclog"
 	"os"
 )
 
 var (
-	logLevel  = os.Getenv("STILETTO_LOG_LEVEL")
-	isEnabled = os.Getenv("STILETTO_LOG_ENABLED")
-	format    = os.Getenv("STILETTO_LOG_FORMAT")
+	logLevel  = os.Getenv("PIPELINE_LOG_LEVEL")
+	isEnabled = os.Getenv("PIPELINE_LOG_ENABLED")
 )
 
-type StilettoLog struct {
+type PipelineLogger struct {
 }
 
 type Logger interface {
-	LogInfo(message, details string, args ...interface{})
-	LogWarn(message, details string, args ...interface{})
-	LogError(message, details string, args ...interface{})
-	LogFatal(message, details string, args ...interface{})
-	LogDebug(message, details string, args ...interface{})
-	InitLogger()
+	LogInfo(action, message string, args ...interface{})
+	LogWarn(action, message string, args ...interface{})
+	LogError(action, message string, args ...interface{})
+	LogDebug(action, message string, args ...interface{})
+	InitLogger() hclog.Logger
 }
 
 func IsEnabled() bool {
@@ -31,88 +30,75 @@ func IsEnabled() bool {
 	return isEnabled == "true"
 }
 
-func getLogger(message, details string) *log.Entry {
-	logger := log.WithFields(log.Fields{
-		"message": message,
-		"details": details,
+func getLogger() hclog.Logger {
+	appLogger := hclog.New(&hclog.LoggerOptions{
+		Name:  "stiletto",
+		Level: hclog.LevelFromString(common.NormaliseStringUpper(logLevel)),
 	})
 
-	return logger
+	return appLogger
 }
 
-func setLogLevel(level string) {
-	switch level {
-	case "debug":
-		log.SetLevel(log.DebugLevel)
-	case "info":
-		log.SetLevel(log.InfoLevel)
-	case "warn":
-		log.SetLevel(log.WarnLevel)
-	case "error":
-		log.SetLevel(log.ErrorLevel)
-	case "fatal":
-		log.SetLevel(log.FatalLevel)
+func (l *PipelineLogger) InitLogger() hclog.Logger {
+	if !IsEnabled() {
+		return nil
 	}
+
+	return getLogger()
 }
 
-func (l *StilettoLog) InitLogger() {
+func (l *PipelineLogger) LogInfo(action, message string, args ...interface{}) {
 	if !IsEnabled() {
 		return
 	}
 
-	if format == "json" {
-		log.SetFormatter(&log.JSONFormatter{})
-	} else {
-		log.SetFormatter(&log.TextFormatter{})
+	logger := getLogger()
+	if action != "" {
+		logger = logger.With("action")
 	}
 
-	if logLevel == "" {
-		logLevel = "error"
-	}
-
-	setLogLevel(logLevel)
+	logger.Info(message, args...)
 }
 
-func (l *StilettoLog) LogInfo(message, details string, args ...interface{}) {
-	if !IsEnabled() {
-		return
-	}
-	logger := getLogger(message, details)
-	logger.Info(args...)
-}
-
-func (l *StilettoLog) LogWarn(message, details string, args ...interface{}) {
+func (l *PipelineLogger) LogWarn(action, message string, args ...interface{}) {
 	if !IsEnabled() {
 		return
 	}
 
-	logger := getLogger(message, details)
-	logger.Warn(args...)
+	logger := getLogger()
+	if action != "" {
+		logger = logger.With("action")
+	}
+
+	logger.Warn(message, args...)
 }
 
-func (l *StilettoLog) LogError(message, details string, args ...interface{}) {
+func (l *PipelineLogger) LogError(action, message string, args ...interface{}) {
 	if !IsEnabled() {
 		return
 	}
 
-	logger := getLogger(message, details)
-	logger.Error(args...)
+	logger := getLogger()
+	if action != "" {
+		logger = logger.With("action")
+	}
+
+	logger.Error(message, args...)
 }
 
-func (l *StilettoLog) LogFatal(message, details string, args ...interface{}) {
+func (l *PipelineLogger) LogDebug(action, message string, args ...interface{}) {
 	if !IsEnabled() {
 		return
 	}
 
-	logger := getLogger(message, details)
-	logger.Fatal(args...)
-}
-
-func (l *StilettoLog) LogDebug(message, details string, args ...interface{}) {
-	if !IsEnabled() {
-		return
+	logger := getLogger()
+	if action != "" {
+		logger = logger.With("action")
 	}
 
-	logger := getLogger(message, details)
-	logger.Debug(args...)
+	logger.Debug(message, args...)
+}
+
+func NewLogger() Logger {
+	return &PipelineLogger{}
 }

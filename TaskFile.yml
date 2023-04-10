@@ -28,3 +28,21 @@ tasks:
   #-----------------------------------------------------------------------------------------
   # OPINIONATED TASKS
   #-----------------------------------------------------------------------------------------
+    cli:
+        desc: Run the CLI
+        cmds:
+            - |
+              go mod tidy
+              if [ -f "stiletto" ]; then rm stiletto; fi
+              go build -o stiletto
+            - ./stiletto {{.CLI_ARGS}}
+
+    snapshot:
+        cmds:
+            - goreleaser check
+            - goreleaser release --snapshot --rm-dist --skip-publish
+
+    release:
+        cmds:
+            - goreleaser check
+            - export GITHUB_TOKEN=${GITHUB_TOKEN} && goreleaser release --rm-dist

@@ -1,16 +1,21 @@
-## What
+<!--
+Thanks for creating this pull request 🤗
 
-* Describe high-level what changed as a result of these commits (i.e. in plain-english, what do these changes mean?)
-* Use bullet points to be concise and to the point.
+Please make sure that the pull request is limited to one type (docs, feature, etc.) and keep it as small as possible. You can open multiple prs instead of opening a huge one.
+-->
 
-## Why
+<!-- If this pull request closes an issue, please mention the issue number below -->
+Closes # <!-- Issue # here -->
 
-* Provide the justifications for the changes (e.g. business case).
-* Describe why these changes were made (e.g. why do these commits fix the problem?)
-* Use bullet points to be concise and to the point.
+## 📑 Description
+<!-- Add a brief description of the pr -->
 
-## References
+## ✅ Checks
+<!-- Make sure your pr passes the CI checks and do check the following fields as needed - -->
+- [ ] My pull request adheres to the code style of this project
+- [ ] My code requires changes to the documentation
+- [ ] I have updated the documentation as required
+- [ ] All the tests have passed
 
-* Link to any supporting github issues or helpful documentation to add some context (e.g. stackoverflow).
-* Use `closes #123`, if this PR closes a GitHub issue or a Jira Ticket `#123`
-* Add related Jira tickets if necessary
+## ℹ Additional Information
+<!-- Any additional information like breaking changes, dependencies added, screenshots, comparisons between new and old behavior, etc. -->
