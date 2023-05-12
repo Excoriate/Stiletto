@@ -10,7 +10,7 @@ import (
 	"os"
 )
 
-var DockerCmd = &cobra.Command{
+var Cmd = &cobra.Command{
 	Version: "v0.0.1",
 	Use:     "docker",
 	Long: `The 'docker' command automates various Continuous Integration (Docker-related) tasks.

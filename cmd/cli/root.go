@@ -163,7 +163,7 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	addPersistentFlags()
 
-	rootCmd.AddCommand(docker.DockerCmd)
+	rootCmd.AddCommand(docker.Cmd)
 	rootCmd.AddCommand(aws.Cmd)
 
 	_ = rootCmd.MarkFlagRequired("task")
