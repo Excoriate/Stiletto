@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/spf13/viper"
 )
@@ -20,26 +21,36 @@ type CLIGlobalArgs struct {
 	RunInVendor                    bool
 }
 
-func GetCLIGlobalArgs() CLIGlobalArgs {
+func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
+	cfg := Cfg{}
+	defaultEmptyMap := make(map[string]interface{})
 
-	keValuePairsFromViper := viper.Get("set-env")
-	var envKeyValuePairsToSet map[string]interface{}
-
-	if keValuePairsFromViper == nil {
-		envKeyValuePairsToSet = make(map[string]interface{})
-	} else {
-		envKeyValuePairsToSet = keValuePairsFromViper.(map[string]interface{})
+	// 'set-env' option
+	keValuePairsFromViper, err := cfg.GetFromViperOrDefault("set-env", defaultEmptyMap)
+	if err != nil {
+		return CLIGlobalArgs{}, errors.NewArgumentError(
+			"Error trying to parse or resolve argument 'set-env'", err)
 	}
 
+	setEnvValue := keValuePairsFromViper.Value.(map[string]interface{})
+
+	// 'scan-env' option
+	defaultEmptySliceString := make([]string, 0)
+	scanEnvVarKeysFromViper, err := cfg.GetFromViperOrDefault("scan-env", defaultEmptySliceString)
+	if err != nil {
+		return CLIGlobalArgs{}, errors.NewArgumentError(
+			"Error trying to parse or resolve argument 'scan-env'", err)
+	}
+
+	scanEnvVarKeys := scanEnvVarKeysFromViper.Value.([]string)
+
 	args := CLIGlobalArgs{
-		WorkingDir: viper.Get("work-dir").(string),
-		MountDir:   viper.Get("mount-dir").(string),
-		TargetDir:  viper.Get("target-dir").(string),
-		TaskName:   viper.Get("task").(string),
-		//ScanEnvVarKeys: viper.Get("scan-env").([]string),
-		ScanEnvVarKeys: []string{},
-		//EnvKeyValuePairsToSet:          viper.Get("set-env").(map[string]interface{}),
-		EnvKeyValuePairsToSet: envKeyValuePairsToSet,
+		WorkingDir:            viper.Get("work-dir").(string),
+		MountDir:              viper.Get("mount-dir").(string),
+		TargetDir:             viper.Get("target-dir").(string),
+		TaskName:              viper.Get("task").(string),
+		ScanEnvVarKeys:        scanEnvVarKeys,
+		EnvKeyValuePairsToSet: setEnvValue,
 		ScanAWSKeys:           viper.Get("scan-aws-keys").(bool),
 		ScanTerraformVars:     viper.Get("scan-terraform-vars").(bool),
 		//CustomCommands:                 viper.Get("custom-cmds").([]string),
@@ -52,7 +63,7 @@ func GetCLIGlobalArgs() CLIGlobalArgs {
 		args.EnvKeyValuePairsToSetString[k] = v.(string)
 	}
 
-	return args
+	return args, nil
 }
 
 func ShowCLITitle() {

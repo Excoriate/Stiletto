@@ -252,7 +252,7 @@ func (i *Instance) ScanEnvVarsCustom(scanCustomVars []string) (map[string]string
 		return map[string]string{}, nil
 	}
 
-	envVars, err := filesystem.FetchEnvVarsAsMap(scanCustomVars)
+	envVars, err := filesystem.FetchEnvVarsAsMap(scanCustomVars, []string{})
 	if err != nil {
 		errMsg := GetErrMsg(i.JobName, i.JobId,
 			"Failed to scan custom env vars", nil)

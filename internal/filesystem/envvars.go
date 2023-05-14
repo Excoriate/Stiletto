@@ -3,6 +3,7 @@ package filesystem
 import (
 	"errors"
 	"fmt"
+	"github.com/Excoriate/stiletto/internal/common"
 	"os"
 	"strings"
 )
@@ -43,13 +44,17 @@ func AreEnvVarsSet(keys []string) error {
 }
 
 // FetchEnvVarsAsMap checks if the environment variables exist and returns them as a map.
-func FetchEnvVarsAsMap(keys []string) (EnvVars, error) {
+func FetchEnvVarsAsMap(keys []string, optionalKeys []string) (EnvVars, error) {
 	result := make(EnvVars)
 
 	for _, key := range keys {
 		value, ok := os.LookupEnv(key)
 		if !ok {
-			return nil, errors.New(fmt.Sprintf("Environment variable %s does not exist", key))
+			if common.IsKeyInMapOptional(key, optionalKeys) {
+				continue
+			} else {
+				return nil, errors.New(fmt.Sprintf("Environment variable %s does not exist", key))
+			}
 		}
 		result[key] = value
 	}
@@ -62,13 +67,48 @@ func ScanAWSCredentialsEnvVars() (EnvVars, error) {
 	keys := []string{
 		"AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY",
+		"AWS_SESSION_TOKEN",
+		"AWS_SECURITY_TOKEN",
+		"AWS_DEFAULT_REGION",
+		"AWS_REGION",
+		"AWS_PROFILE",
 	}
 
-	if err := AreEnvVarsSet(keys); err != nil {
+	mandatoryKeys := []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}
+
+	if err := AreEnvVarsSet(mandatoryKeys); err != nil {
 		return nil, fmt.Errorf("AWS credentials are not set as environment variables: %w", err)
 	}
 
-	return FetchEnvVarsAsMap(keys)
+	// Here' it's scanned the required environment variables
+	envs, err := FetchEnvVarsAsMap(keys, []string{"AWS_PROFILE", "AWS_SECURITY_TOKEN",
+		"AWS_SESSION_TOKEN", "AWS_REGION", "AWS_DEFAULT_REGION"})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Precedence rules
+	if defaultRegion, ok := envs["AWS_DEFAULT_REGION"]; ok {
+		envs["AWS_REGION"] = defaultRegion
+	}
+
+	if accessKey, ok := envs["AWS_ACCESS_KEY_ID"]; ok {
+		envs["AWS_SESSION_TOKEN"] = accessKey
+	}
+
+	if secretKey, ok := envs["AWS_SECRET_ACCESS_KEY"]; ok {
+		envs["AWS_SECURITY_TOKEN"] = secretKey
+	}
+
+	// If keys are set, but neither of the regions are set, set the region to us-east-1
+	if _, ok := envs["AWS_REGION"]; !ok {
+		if _, ok := envs["AWS_DEFAULT_REGION"]; !ok {
+			envs["AWS_REGION"] = "us-east-1"
+		}
+	}
+
+	return envs, nil
 }
 
 // FetchEnvVarsWithPrefix fetches environment variables that start with the specified prefix

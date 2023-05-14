@@ -30,6 +30,9 @@ type CoreTasker interface {
 	MountDir(targetDir string, client *dagger.Client, container *dagger.
 	Container,
 		filesPreRequisites []string, ctx context.Context) (*dagger.Container, error)
+
+	RunCmdInContainer(container *dagger.Container, commands [][]string,
+		stdOutEnabled bool, ctx context.Context) error
 }
 
 type Runner struct {

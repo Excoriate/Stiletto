@@ -34,9 +34,9 @@ func New(cliArgs *config.CLIGlobalArgs, stack, jobName string) (*pipeline.Config
 		p.PipelineOpts.TargetDirPath, p.PipelineOpts.MountDirPath)
 
 	// 2. Initialising the job.
-	j, err := job.NewJob(p, job.InitOptions{
+	j, jobErr := job.NewJob(p, job.InitOptions{
 		Name:  cliArgs.TaskName,
-		Stack: "AWS",
+		Stack: stackNormalised,
 
 		// Pipeline reference.
 		PipelineCfg: p,
@@ -53,9 +53,9 @@ func New(cliArgs *config.CLIGlobalArgs, stack, jobName string) (*pipeline.Config
 		EnvVarsToScan:        cliArgs.ScanEnvVarKeys,
 	})
 
-	if err != nil {
-		msg.ShowError("INIT", "Failed job initialization", err)
-		return nil, nil, err
+	if jobErr != nil {
+		msg.ShowError("INIT", "Failed job initialization", jobErr)
+		return nil, nil, jobErr
 	}
 
 	return p, j, nil

@@ -165,7 +165,7 @@ func (a *AWSECSDeployAction) DeployNewTask() (Output, error) {
 	return Output{}, nil
 }
 
-func NewAWSECSDeployAction(task CoreTasker, prefix string) AWSECSDeployActions {
+func NewAWSECSAction(task CoreTasker, prefix string) AWSECSDeployActions {
 	return &AWSECSDeployAction{
 		Task:   task,
 		prefix: prefix,

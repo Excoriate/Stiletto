@@ -24,7 +24,7 @@ func RunTaskAWSECR(opt InitOptions) error {
 		t := NewTaskAWSECR(c, actionCMDs, &opt, actionPrefix)
 
 		// New action to execute (mapped to the --task passed from the command line)
-		a := NewAWSECRPushAction(t, actionPrefix)
+		a := NewAWSECRAction(t, actionPrefix)
 
 		// Run the action
 		_, err := a.DeployNewTask()

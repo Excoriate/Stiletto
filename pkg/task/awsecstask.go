@@ -5,6 +5,7 @@ import (
 	"dagger.io/dagger"
 	"fmt"
 	"github.com/Excoriate/stiletto/internal/daggerio"
+	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/Excoriate/stiletto/internal/filesystem"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/Excoriate/stiletto/pkg/job"
@@ -16,6 +17,51 @@ type AWSECSTask struct {
 	Cfg      *Task
 	Actions  []string
 	UXPrefix string
+}
+
+func (t *AWSECSTask) RunCmdInContainer(container *dagger.Container, commands [][]string,
+	stdOutEnabled bool, ctx context.Context) error {
+	ux := tui.NewTUIMessage()
+
+	if len(commands) != 0 {
+		for _, cmd := range commands {
+			ux.ShowInfo(t.UXPrefix, fmt.Sprintf("Running command %s", cmd))
+
+			if !stdOutEnabled {
+				_, err := container.
+					WithExec(cmd).
+					ExitCode(ctx)
+
+				if err != nil {
+					ux.ShowError(t.UXPrefix, fmt.Sprintf("Failed to run command %s", cmd), err)
+					return errors.NewTaskExecutionError(fmt.Sprintf("Failed to run command %s",
+						cmd), err)
+				}
+			} else {
+				_, err := container.
+					WithExec(cmd).
+					Stdout(ctx)
+
+				if err != nil {
+					ux.ShowError(t.UXPrefix, fmt.Sprintf("Failed to run command %s", cmd), err)
+					return errors.NewTaskExecutionError(fmt.Sprintf("Failed to run command %s",
+						cmd), err)
+				}
+			}
+		}
+	} else {
+		_, err := container.
+			WithExec([]string{"ls", "-ltrh"}).
+			ExitCode(ctx)
+
+		if err != nil {
+			ux.ShowError(t.UXPrefix, fmt.Sprintf("Failed to run command %s", "ls -la"), err)
+			return errors.NewTaskExecutionError(fmt.Sprintf("Failed to run command %s",
+				"ls -ltrh"), err)
+		}
+	}
+
+	return nil
 }
 
 func (t *AWSECSTask) MountDir(targetDir string, client *dagger.Client, container *dagger.

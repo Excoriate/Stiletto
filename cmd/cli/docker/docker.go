@@ -26,7 +26,12 @@ You can specify the tasks you want to perform using the provided --task flag.`,
 		stackName := "DOCKER"
 		jobName := "BUILD"
 
-		cliGlobalArgs := config.GetCLIGlobalArgs()
+		cliGlobalArgs, err := config.GetCLIGlobalArgs()
+
+		if err != nil {
+			panic(err)
+		}
+
 		p, j, err := api.New(&cliGlobalArgs, stackName, jobName)
 		if err != nil {
 			panic(err)

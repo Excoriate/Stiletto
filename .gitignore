@@ -41,3 +41,12 @@ node_modules/
 npm-debug.log
 yarn-error.log
 yarn.lock
+
+.env
+
+.terragrunt-cache
+.terraform
+providers.tf
+terraform.tfstate
+terraform.tfstate.backup
+backend.tf

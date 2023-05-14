@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Excoriate/stiletto/cmd/cli/aws"
 	"github.com/Excoriate/stiletto/cmd/cli/docker"
+	"github.com/Excoriate/stiletto/cmd/cli/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -165,6 +166,7 @@ func init() {
 
 	rootCmd.AddCommand(docker.Cmd)
 	rootCmd.AddCommand(aws.Cmd)
+	rootCmd.AddCommand(infra.Cmd)
 
 	_ = rootCmd.MarkFlagRequired("task")
 	_ = rootCmd.MarkFlagRequired("workdir")

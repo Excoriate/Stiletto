@@ -11,8 +11,8 @@ import (
 func NewTask(p *pipeline.Config, job *job.Job, actions []string,
 	init *InitOptions) *Task {
 	taskId := common.GetUUID()
-	taskName := "BUILD"
-	stackName := "DOCKER"
+	taskName := common.NormaliseStringUpper(init.Task)
+	stackName := job.Stack
 
 	p.UXMessage.ShowInfo("TASK-INIT", fmt.Sprintf("Initialising task: %s with id: %s",
 		taskName, taskId))

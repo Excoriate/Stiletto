@@ -12,14 +12,14 @@ import (
 	"github.com/Excoriate/stiletto/pkg/pipeline"
 )
 
-type AWSECRTask struct {
+type InfraTerraGruntTask struct {
 	Init     *InitOptions
 	Cfg      *Task
 	Actions  []string
 	UXPrefix string
 }
 
-func (t *AWSECRTask) RunCmdInContainer(container *dagger.Container, commands [][]string,
+func (t *InfraTerraGruntTask) RunCmdInContainer(container *dagger.Container, commands [][]string,
 	stdOutEnabled bool, ctx context.Context) error {
 	ux := tui.NewTUIMessage()
 
@@ -64,7 +64,7 @@ func (t *AWSECRTask) RunCmdInContainer(container *dagger.Container, commands [][
 	return nil
 }
 
-func (t *AWSECRTask) MountDir(targetDir string, client *dagger.Client, container *dagger.
+func (t *InfraTerraGruntTask) MountDir(targetDir string, client *dagger.Client, container *dagger.
 Container,
 	filesPreRequisites []string, ctx context.Context) (*dagger.Container, error) {
 	ux := tui.NewTUIMessage()
@@ -110,35 +110,35 @@ Container,
 	return containerMounted, nil
 }
 
-func (t *AWSECRTask) GetClient() *dagger.Client {
+func (t *InfraTerraGruntTask) GetClient() *dagger.Client {
 	return t.Cfg.JobCfg.Client
 }
 
-func (t *AWSECRTask) GetPipeline() *pipeline.Config {
+func (t *InfraTerraGruntTask) GetPipeline() *pipeline.Config {
 	return t.Cfg.PipelineCfg
 }
 
-func (t *AWSECRTask) GetPipelineUXLog() tui.TUIMessenger {
+func (t *InfraTerraGruntTask) GetPipelineUXLog() tui.TUIMessenger {
 	return t.Cfg.PipelineCfg.UXMessage
 }
 
-func (t *AWSECRTask) GetJob() *job.Job {
+func (t *InfraTerraGruntTask) GetJob() *job.Job {
 	return t.Cfg.JobCfg
 }
 
-func (t *AWSECRTask) ConvertDir(c *dagger.Client, dir string) (*dagger.Directory, error) {
+func (t *InfraTerraGruntTask) ConvertDir(c *dagger.Client, dir string) (*dagger.Directory, error) {
 	return daggerio.GetDaggerDir(c, dir)
 }
 
-func (t *AWSECRTask) GetCoreTask() *Task {
+func (t *InfraTerraGruntTask) GetCoreTask() *Task {
 	return t.Cfg
 }
 
-func (t *AWSECRTask) GetJobContainerImage() string {
+func (t *InfraTerraGruntTask) GetJobContainerImage() string {
 	return t.Cfg.JobCfg.ContainerImageURL
 }
 
-func (t *AWSECRTask) PushImage(addr string, container *dagger.
+func (t *InfraTerraGruntTask) PushImage(addr string, container *dagger.
 Container, dockerFileDir *dagger.Directory,
 	ctx context.Context) error {
 
@@ -152,25 +152,25 @@ Container, dockerFileDir *dagger.Directory,
 	return nil
 }
 
-func (t *AWSECRTask) BuildImage(dockerFilePath string, container *dagger.Container,
+func (t *InfraTerraGruntTask) BuildImage(dockerFilePath string, container *dagger.Container,
 	ctx context.Context) (*dagger.Container, error) {
 	return daggerio.BuildImage(dockerFilePath, t.GetClient(), container)
 }
 
-func (t *AWSECRTask) AuthWithRegistry(c *dagger.Client, container *dagger.Container,
+func (t *InfraTerraGruntTask) AuthWithRegistry(c *dagger.Client, container *dagger.Container,
 	opt daggerio.RegistryAuthOptions) (*dagger.Container, error) {
 	return daggerio.AuthWithRegistry(c, container, opt)
 }
 
-func (t *AWSECRTask) GetJobContainerDefault() *dagger.Container {
+func (t *InfraTerraGruntTask) GetJobContainerDefault() *dagger.Container {
 	return t.Cfg.JobCfg.ContainerDefault
 }
 
-func (t *AWSECRTask) GetJobEnvVars() map[string]string {
+func (t *InfraTerraGruntTask) GetJobEnvVars() map[string]string {
 	return t.Cfg.EnvVarsInheritFromJob
 }
 
-func (t *AWSECRTask) SetEnvVars(envVars []map[string]string,
+func (t *InfraTerraGruntTask) SetEnvVars(envVars []map[string]string,
 	container *dagger.Container) (*dagger.Container, error) {
 	ux := t.Cfg.PipelineCfg.UXMessage
 
@@ -188,7 +188,7 @@ func (t *AWSECRTask) SetEnvVars(envVars []map[string]string,
 	return daggerio.SetEnvVarsInContainer(container, envVarsMerged)
 }
 
-func (t *AWSECRTask) GetContainer(fromImage string) (*dagger.Container,
+func (t *InfraTerraGruntTask) GetContainer(fromImage string) (*dagger.Container,
 	error) {
 	if fromImage == "" {
 		return t.Cfg.JobCfg.ContainerDefault, nil
@@ -197,10 +197,10 @@ func (t *AWSECRTask) GetContainer(fromImage string) (*dagger.Container,
 	return t.Cfg.JobCfg.Client.Container().From(fromImage), nil
 }
 
-func NewTaskAWSECR(coreTask *Task, actions []string,
+func NewTaskInfraTerraGrunt(coreTask *Task, actions []string,
 	init *InitOptions, uxPrefix string) CoreTasker {
 
-	return &AWSECRTask{
+	return &InfraTerraGruntTask{
 		Init:     init,
 		Cfg:      coreTask,
 		Actions:  actions,

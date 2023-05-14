@@ -20,6 +20,15 @@ func IsStringInSlice(target string, list []string) bool {
 	return false
 }
 
+func IsKeyInMapOptional(key string, optionalKeys []string) bool {
+	for _, optionalKey := range optionalKeys {
+		if key == optionalKey {
+			return true
+		}
+	}
+	return false
+}
+
 func StructToMap(input interface{}, toUpper bool) map[string]interface{} {
 	result := make(map[string]interface{})
 	inputValue := reflect.ValueOf(input)

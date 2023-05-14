@@ -153,7 +153,7 @@ func (a *AWSECRPushAction) DeployNewTask() (Output, error) {
 	return Output{}, nil
 }
 
-func NewAWSECRPushAction(task CoreTasker, prefix string) AWSECRPushActions {
+func NewAWSECRAction(task CoreTasker, prefix string) AWSECRPushActions {
 	return &AWSECRPushAction{
 		Task:   task,
 		prefix: prefix,

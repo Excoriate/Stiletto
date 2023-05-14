@@ -6,6 +6,7 @@ import (
 	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/spf13/viper"
 	"os"
+	"reflect"
 )
 
 type CfgValue struct {
@@ -19,7 +20,7 @@ type Cfg struct {
 
 type CfgRetriever interface {
 	GetFromViper(key string) (CfgValue, error)
-	GetFromViperOrDefault(key string, defaultValue string) (CfgValue, error)
+	GetFromViperOrDefault(key string, defaultValue interface{}) (CfgValue, error)
 	GetFromEnvVars(key string) (CfgValue, error)
 	GetFromAny(key string) (CfgValue, error)
 	IsRunningInVendorAutomation() bool
@@ -44,10 +45,40 @@ func (c *Cfg) ValidateCfgKey(key string) (string, error) {
 	return keyNormalised, nil
 }
 
-func (c *Cfg) GetFromViperOrDefault(key string, defaultValue string) (CfgValue, error) {
-	return CfgValue{}, nil
-}
+func (c *Cfg) GetFromViperOrDefault(key string, defaultValue interface{}) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
 
+	value := viper.Get(keyNormalised)
+	if value == nil {
+		return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+	}
+
+	switch v := value.(type) {
+	case string:
+		if v == "" {
+			return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+		}
+	case map[string]interface{}:
+		if len(v) == 0 {
+			return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+		}
+	case []string:
+		if len(v) == 0 {
+			return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+		}
+	default:
+		// Check if value and defaultValue are of the same type
+		if reflect.TypeOf(value) != reflect.TypeOf(defaultValue) {
+			return CfgValue{}, errors.NewPipelineConfigurationError(
+				"type mismatch between value and defaultValue", nil)
+		}
+	}
+
+	return CfgValue{Key: keyNormalised, Value: value}, nil
+}
 func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
 	keyNormalised, err := c.ValidateCfgKey(key)
 	if err != nil {

@@ -35,7 +35,12 @@ E.g.: 'deploy'`,
 		stackName := "AWS"
 		jobName := "ECS"
 
-		cliGlobalArgs := config.GetCLIGlobalArgs()
+		cliGlobalArgs, err := config.GetCLIGlobalArgs()
+
+		if err != nil {
+			panic(err)
+		}
+
 		p, j, err := api.New(&cliGlobalArgs, stackName, jobName)
 		if err != nil {
 			panic(err)
