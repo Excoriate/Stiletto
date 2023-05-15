@@ -21,6 +21,7 @@ var (
 	GlobalCustomCommands              []string
 	GlobalScanAWSKeys                 bool
 	GlobalScanTFVars                  bool
+	GlobalScanAllEnvVars              bool
 	GlobalCustomCMDs                  []string
 	GlobalDaggerInitClientWithWorkDir bool
 	GlobalRunInVendor                 bool
@@ -99,6 +100,11 @@ func addPersistentFlags() {
 		"Scan terraform exported environment variables and set it into the generated containers ("+
 			"TG_VAR_).")
 
+	rootCmd.PersistentFlags().BoolVarP(&GlobalScanAllEnvVars,
+		"scan-all-env-vars",
+		"", false,
+		"Scan all environment variables and set them into the generated containers.")
+
 	rootCmd.PersistentFlags().StringSliceVarP(&GlobalCustomCMDs,
 		"custom-cmds",
 		"u", []string{},
@@ -126,6 +132,7 @@ func addPersistentFlags() {
 	_ = viper.BindPFlag("init-dagger-with-workdir", rootCmd.PersistentFlags().Lookup(
 		"init-dagger-with-workdir"))
 	_ = viper.BindPFlag("run-in-vendor", rootCmd.PersistentFlags().Lookup("run-in-vendor"))
+	_ = viper.BindPFlag("scan-all-env-vars", rootCmd.PersistentFlags().Lookup("scan-all-env-vars"))
 }
 
 func initConfig() {

@@ -35,6 +35,7 @@ type InfraTerraGruntActionArgs struct {
 type TerrGruntActionRunner interface {
 	GetOptions() (InfraTerraGruntActionArgs, error)
 	Plan() (Output, error)
+	RunTGCommand(commands [][]string) (Output, error)
 }
 
 func (a *InfraTerraGruntAction) GetOptions() (InfraTerraGruntActionArgs, error) {
@@ -96,37 +97,61 @@ func (a *InfraTerraGruntAction) GetOptions() (InfraTerraGruntActionArgs, error) 
 	return args, nil
 }
 
-func (a *InfraTerraGruntAction) Plan() (Output, error) {
-	_, _ = a.GetOptions()
-	// Getting all the requirements.
+func (a *InfraTerraGruntAction) RunTGCommand(commands [][]string) (Output, error) {
 	uxLog := a.Task.GetPipelineUXLog()
+
+	// Fetch action's configuration
 	opts, err := a.GetOptions()
 
 	if err != nil {
-		errMsg := "Failed to run action: 'Plan' - Cannot pass the 'action' arguments validations"
+		errMsg := "Failed to run action: 'RunTGCommand' - Cannot pass the 'action' arguments validations"
 		uxLog.ShowError(a.prefix, errMsg, err)
 		return Output{}, errors.NewActionCfgError(errMsg, err)
 	}
 
+	// Reference required objects (container, client, context, etc.)
 	container := a.Task.GetJobContainerDefault()
 	client := a.Task.GetClient()
 	ctx := a.Task.GetJob().Ctx
 	preRequiredFiles := []string{opts.TgConfigFile}
 
-	mountedContainer, mntErr := a.Task.MountDir(opts.TargetModuleDir, client, container,
+	// Inherit the environment variables from the job.
+	preConfiguredContainer, preCfgErr := a.Task.SetEnvVarsFromJob(container)
+	if preCfgErr != nil {
+		uxLog.ShowError(a.prefix, "Failed to run action: 'RunTGCommand' - Cannot set the environment variables from the job", preCfgErr)
+		return Output{}, errors.NewActionCfgError("Failed to run action: 'RunTGCommand' - Cannot set the environment variables from the job", preCfgErr)
+	}
+
+	// Mount required directories.
+	configuredContainer, mntErr := a.Task.MountDir(opts.TargetModuleDir, client,
+		preConfiguredContainer,
 		preRequiredFiles, ctx)
 
 	if mntErr != nil {
 		return Output{}, mntErr
 	}
 
-	cmds := [][]string{opts.Commands}
+	// Run the commands.
+	var cmdsToRun [][]string
+	if len(commands) > 0 {
+		cmdsToRun = commands
+	} else {
+		cmdsToRun = [][]string{opts.Commands}
+	}
 
-	if err := a.Task.RunCmdInContainer(mountedContainer, cmds, false, ctx); err != nil {
+	if err := a.Task.RunCmdInContainer(configuredContainer, cmdsToRun, false, ctx); err != nil {
 		return Output{}, err
 	}
 
 	return Output{}, nil
+}
+
+func (a *InfraTerraGruntAction) Plan() (Output, error) {
+	inspectCfgFile := []string{"cat", "terragrunt.hcl"}
+	planCmd := []string{"terragrunt", "plan"}
+
+	cmds := [][]string{inspectCfgFile, planCmd}
+	return a.RunTGCommand(cmds)
 }
 
 func NewInfraTerraGruntAction(task CoreTasker, prefix string) *InfraTerraGruntAction {

@@ -20,6 +20,7 @@ type CoreTasker interface {
 	GetJobContainerDefault() *dagger.Container
 	GetJobEnvVars() map[string]string
 	SetEnvVars(envVars []map[string]string, container *dagger.Container) (*dagger.Container, error)
+	SetEnvVarsFromJob(container *dagger.Container) (*dagger.Container, error)
 	AuthWithRegistry(c *dagger.Client, container *dagger.Container,
 		opt daggerio.RegistryAuthOptions) (*dagger.Container,
 		error)

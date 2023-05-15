@@ -95,6 +95,16 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		return nil, err
 	}
 
+	var envVarsAllScanned map[string]string
+
+	isAllEnvVarsToBeScanned := p.PipelineOpts.IsAllEnvVarsToScanEnabled
+	if isAllEnvVarsToBeScanned {
+		envVarsAllScanned, err = i.ScanAllEnvVars()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	//targetDir := p.PipelineOpts.TargetDir
 	//mountDir := p.PipelineOpts.MountDir
 	//workDir := p.PipelineOpts.WorkDir
@@ -112,6 +122,7 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		EnvVarsTerraformScanned: terraformEnvVars,
 		EnvVarsCustomScanned:    customEnvVars,
 		EnvVarsToSet:            envVarsToSet,
+		EnvVarsAllScanned:       envVarsAllScanned,
 
 		// Directories (dagger format).
 		RootDir:   rootDir,
@@ -152,6 +163,10 @@ func (i *Instance) InitDagger() (*dagger.Client, error) {
 		"Dagger client initialised"))
 
 	return c, nil
+}
+
+func (i *Instance) ScanAllEnvVars() (map[string]string, error) {
+	return filesystem.FetchAllEnvVarsFromHost()
 }
 
 // InitContainerImage 2. Get the container image.

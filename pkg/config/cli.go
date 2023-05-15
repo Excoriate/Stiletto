@@ -16,6 +16,7 @@ type CLIGlobalArgs struct {
 	EnvKeyValuePairsToSetString    map[string]string
 	ScanAWSKeys                    bool
 	ScanTerraformVars              bool
+	ScanAllEnvVars                 bool
 	CustomCommands                 []string
 	InitDaggerWithWorkDirByDefault bool
 	RunInVendor                    bool
@@ -53,6 +54,7 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 		EnvKeyValuePairsToSet: setEnvValue,
 		ScanAWSKeys:           viper.Get("scan-aws-keys").(bool),
 		ScanTerraformVars:     viper.Get("scan-terraform-vars").(bool),
+		ScanAllEnvVars:        viper.Get("scan-all-env-vars").(bool),
 		//CustomCommands:                 viper.Get("custom-cmds").([]string),
 		CustomCommands:                 []string{},
 		InitDaggerWithWorkDirByDefault: viper.Get("init-dagger-with-workdir").(bool),

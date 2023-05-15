@@ -14,5 +14,6 @@ type PipelineOptions struct {
 	// Automatic discovery of environment variables, for well-known use cases.
 	IsAWSEnvVarKeysToScanEnabled   bool
 	IsTerraformVarsScanEnabled     bool
+	IsAllEnvVarsToScanEnabled      bool
 	InitDaggerWithWorkDirByDefault bool
 }

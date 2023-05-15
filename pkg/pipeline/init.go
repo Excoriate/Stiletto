@@ -219,6 +219,7 @@ func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error 
 
 func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []string,
 	envVarsMapToSet map[string]string, isAWSKeysToScan bool, isTFScanEnabled bool,
+	isAllEnvVarsToScan bool,
 	initDaggerWithWorkDirByDefault bool) (*Config,
 	error) {
 
@@ -241,6 +242,7 @@ func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []strin
 		IsAWSEnvVarKeysToScanEnabled:   isAWSKeysToScan,
 		IsTerraformVarsScanEnabled:     isTFScanEnabled,
 		InitDaggerWithWorkDirByDefault: initDaggerWithWorkDirByDefault,
+		IsAllEnvVarsToScanEnabled:      isAllEnvVarsToScan,
 	}
 
 	if err := CheckPreConditions(&args, logPrinter); err != nil {

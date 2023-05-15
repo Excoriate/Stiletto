@@ -188,6 +188,63 @@ func (t *InfraTerraGruntTask) SetEnvVars(envVars []map[string]string,
 	return daggerio.SetEnvVarsInContainer(container, envVarsMerged)
 }
 
+func (t *InfraTerraGruntTask) SetEnvVarsFromJob(container *dagger.Container) (*dagger.Container, error) {
+	ux := t.Cfg.PipelineCfg.UXMessage
+	j := t.GetJob()
+
+	awsEnvVars := j.EnvVarsAWSScanned
+	tfEnvVars := j.EnvVarsTerraformScanned
+	customEnvVars := j.EnvVarsCustomScanned
+	envFromHost := j.EnvVarsAllScanned
+	specificToSet := j.EnvVarsToSet
+
+	c := container
+
+	var mergedEnvVars map[string]string
+
+	if len(awsEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting AWS environment variables from the job")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, awsEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No AWS environment variables to set from the job")
+	}
+
+	if len(tfEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting Terraform environment variables from the job")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, tfEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No Terraform environment variables to set from the job")
+	}
+
+	if len(customEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting custom environment variables from the job")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, customEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No custom environment variables to set from the job")
+	}
+
+	if len(envFromHost) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting environment variables from the host")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, envFromHost)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No environment variables to set from the host")
+	}
+
+	if len(specificToSet) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting specific environment variables")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, specificToSet)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No specific environment variables to set")
+	}
+
+	finalContainer, err := daggerio.SetEnvVarsInContainer(c, mergedEnvVars)
+	if err != nil {
+		return nil, err
+	}
+
+	return finalContainer, nil
+}
+
 func (t *InfraTerraGruntTask) GetContainer(fromImage string) (*dagger.Container,
 	error) {
 	if fromImage == "" {

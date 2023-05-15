@@ -52,6 +52,7 @@ type Job struct {
 	EnvVarsAWSScanned       map[string]string
 	EnvVarsTerraformScanned map[string]string
 	EnvVarsCustomScanned    map[string]string
+	EnvVarsAllScanned       map[string]string
 	EnvVarsToSet            map[string]string
 
 	Ctx context.Context
@@ -64,6 +65,7 @@ type Runner interface {
 	ScanEnvVarsAWSKeys(scanAWSVars bool) (map[string]string, error)
 	ScanEnvVarsTerraform(scanTerraformVars bool) (map[string]string, error)
 	ScanEnvVarsCustom(scanCustomVars []string) (map[string]string, error)
+	ScanAllEnvVars() (map[string]string, error)
 	ValidatedEnvVarsPassed(envVarsToSet map[string]string) (map[string]string, error)
 	BuildRootDir(client *dagger.Client) (*dagger.Directory, error)
 	BuildWorkDir(client *dagger.Client, workDir string) (*dagger.Directory, error)
