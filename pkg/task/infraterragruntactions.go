@@ -35,6 +35,9 @@ type InfraTerraGruntActionArgs struct {
 type TerrGruntActionRunner interface {
 	GetOptions() (InfraTerraGruntActionArgs, error)
 	Plan() (Output, error)
+	Apply() (Output, error)
+	Destroy() (Output, error)
+	Validate() (Output, error)
 	RunTGCommand(commands [][]string) (Output, error)
 }
 
@@ -151,6 +154,30 @@ func (a *InfraTerraGruntAction) Plan() (Output, error) {
 	planCmd := []string{"terragrunt", "plan"}
 
 	cmds := [][]string{inspectCfgFile, planCmd}
+	return a.RunTGCommand(cmds)
+}
+
+func (a *InfraTerraGruntAction) Apply() (Output, error) {
+	inspectCfgFile := []string{"cat", "terragrunt.hcl"}
+	applyCmd := []string{"terragrunt", "apply", "-auto-approve"}
+
+	cmds := [][]string{inspectCfgFile, applyCmd}
+	return a.RunTGCommand(cmds)
+}
+
+func (a *InfraTerraGruntAction) Destroy() (Output, error) {
+	inspectCfgFile := []string{"cat", "terragrunt.hcl"}
+	destroyCmd := []string{"terragrunt", "destroy", "-auto-approve"}
+
+	cmds := [][]string{inspectCfgFile, destroyCmd}
+	return a.RunTGCommand(cmds)
+}
+
+func (a *InfraTerraGruntAction) Validate() (Output, error) {
+	inspectCfgFile := []string{"cat", "terragrunt.hcl"}
+	validateCmd := []string{"terragrunt", "validate"}
+
+	cmds := [][]string{inspectCfgFile, validateCmd}
 	return a.RunTGCommand(cmds)
 }
 

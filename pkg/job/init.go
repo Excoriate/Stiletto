@@ -65,31 +65,37 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		return nil, err
 	}
 
-	// 7. Validate and set environment variables.
+	// 7. Scan (if applicable) env vars from dotenv File
+	envVarsFromDotEnv, err := i.ScanEnvVarsFromDotEnvFile(new.DotEnvFile)
+	if err != nil {
+		return nil, err
+	}
+
+	// 8. Validate and set environment variables.
 	envVarsToSet, err := i.ValidatedEnvVarsPassed(new.EnvVarsToSet)
 	if err != nil {
 		return nil, err
 	}
 
-	// 8. RootDir in dagger format.
+	// 9 RootDir in dagger format.
 	rootDir, err := i.BuildRootDir(c)
 	if err != nil {
 		return nil, err
 	}
 
-	// 9. WorkDir in dagger format.
+	// 10. WorkDir in dagger format.
 	workDir, err := i.BuildWorkDir(c, new.WorkDir)
 	if err != nil {
 		return nil, err
 	}
 
-	// 10. MountDir in dagger format.
+	// 11. MountDir in dagger format.
 	mountDir, err := i.BuildMountDir(c, new.MountDir)
 	if err != nil {
 		return nil, err
 	}
 
-	// 11. Target dir in dagger format.
+	// 12. Target dir in dagger format.
 	targetDir, err := i.BuildTargetDir(c, new.TargetDir)
 	if err != nil {
 		return nil, err
@@ -123,6 +129,7 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		EnvVarsCustomScanned:    customEnvVars,
 		EnvVarsToSet:            envVarsToSet,
 		EnvVarsAllScanned:       envVarsAllScanned,
+		EnvVarsFromDotEnvFile:   envVarsFromDotEnv,
 
 		// Directories (dagger format).
 		RootDir:   rootDir,
@@ -275,6 +282,21 @@ func (i *Instance) ScanEnvVarsCustom(scanCustomVars []string) (map[string]string
 	}
 
 	ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Custom env vars scanned successfully"))
+
+	return envVars, nil
+}
+
+func (i *Instance) ScanEnvVarsFromDotEnvFile(dotEnvFile string) (map[string]string, error) {
+	ux := i.InitOptions.PipelineCfg.UXMessage
+
+	envVars, err := filesystem.GetEnvVarsFromDotFile(dotEnvFile)
+	if err != nil {
+		errMsg := GetErrMsg(i.JobName, i.JobId,
+			"Failed to scan env vars from .env file", nil)
+		return nil, errors.NewDaggerEngineError(errMsg, err)
+	}
+
+	ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Env vars scanned successfully from .env file"))
 
 	return envVars, nil
 }

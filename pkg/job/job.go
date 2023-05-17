@@ -21,6 +21,7 @@ type InitOptions struct {
 	ScanTerraformEnvVars bool
 	EnvVarsToSet         map[string]string
 	EnvVarsToScan        []string
+	DotEnvFile           string
 }
 
 type Job struct {
@@ -54,6 +55,7 @@ type Job struct {
 	EnvVarsCustomScanned    map[string]string
 	EnvVarsAllScanned       map[string]string
 	EnvVarsToSet            map[string]string
+	EnvVarsFromDotEnvFile   map[string]string
 
 	Ctx context.Context
 }
@@ -66,6 +68,7 @@ type Runner interface {
 	ScanEnvVarsTerraform(scanTerraformVars bool) (map[string]string, error)
 	ScanEnvVarsCustom(scanCustomVars []string) (map[string]string, error)
 	ScanAllEnvVars() (map[string]string, error)
+	ScanEnvVarsFromDotEnvFile(dotEnvFile string) (map[string]string, error)
 	ValidatedEnvVarsPassed(envVarsToSet map[string]string) (map[string]string, error)
 	BuildRootDir(client *dagger.Client) (*dagger.Directory, error)
 	BuildWorkDir(client *dagger.Client, workDir string) (*dagger.Directory, error)

@@ -16,6 +16,7 @@ type CLIGlobalArgs struct {
 	EnvKeyValuePairsToSetString    map[string]string
 	ScanAWSKeys                    bool
 	ScanTerraformVars              bool
+	DotEnvFile                     string
 	ScanAllEnvVars                 bool
 	CustomCommands                 []string
 	InitDaggerWithWorkDirByDefault bool
@@ -46,19 +47,20 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 	scanEnvVarKeys := scanEnvVarKeysFromViper.Value.([]string)
 
 	args := CLIGlobalArgs{
-		WorkingDir:            viper.Get("work-dir").(string),
-		MountDir:              viper.Get("mount-dir").(string),
-		TargetDir:             viper.Get("target-dir").(string),
-		TaskName:              viper.Get("task").(string),
+		WorkingDir:            viper.GetString("work-dir"),
+		MountDir:              viper.GetString("mount-dir"),
+		TargetDir:             viper.GetString("target-dir"),
+		TaskName:              viper.GetString("task"),
 		ScanEnvVarKeys:        scanEnvVarKeys,
 		EnvKeyValuePairsToSet: setEnvValue,
-		ScanAWSKeys:           viper.Get("scan-aws-keys").(bool),
-		ScanTerraformVars:     viper.Get("scan-terraform-vars").(bool),
-		ScanAllEnvVars:        viper.Get("scan-all-env-vars").(bool),
+		ScanAWSKeys:           viper.GetBool("scan-aws-keys"),
+		ScanTerraformVars:     viper.GetBool("scan-terraform-vars"),
+		ScanAllEnvVars:        viper.GetBool("scan-all-env-vars"),
+		DotEnvFile:            viper.GetString("dot-env-file"),
 		//CustomCommands:                 viper.Get("custom-cmds").([]string),
 		CustomCommands:                 []string{},
-		InitDaggerWithWorkDirByDefault: viper.Get("init-dagger-with-workdir").(bool),
-		RunInVendor:                    viper.Get("run-in-vendor").(bool),
+		InitDaggerWithWorkDirByDefault: viper.GetBool("init-dagger-with-workdir"),
+		RunInVendor:                    viper.GetBool("run-in-vendor"),
 	}
 
 	for k, v := range args.EnvKeyValuePairsToSet {

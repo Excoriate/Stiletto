@@ -22,6 +22,7 @@ var (
 	GlobalScanAWSKeys                 bool
 	GlobalScanTFVars                  bool
 	GlobalScanAllEnvVars              bool
+	GlobalDotEnvFile                  string
 	GlobalCustomCMDs                  []string
 	GlobalDaggerInitClientWithWorkDir bool
 	GlobalRunInVendor                 bool
@@ -120,6 +121,11 @@ func addPersistentFlags() {
 		"", false,
 		"Run in vendor mode. If so, it'll limit some 'host' specific commands to run.")
 
+	rootCmd.PersistentFlags().StringVarP(&GlobalDotEnvFile,
+		"dot-env-file",
+		"", "",
+		"Scan environment variables from a .env file and set them into the generated containers.")
+
 	_ = viper.BindPFlag("task", rootCmd.PersistentFlags().Lookup("task"))
 	_ = viper.BindPFlag("work-dir", rootCmd.PersistentFlags().Lookup("work-dir"))
 	_ = viper.BindPFlag("target-dir", rootCmd.PersistentFlags().Lookup("target-dir"))
@@ -133,6 +139,7 @@ func addPersistentFlags() {
 		"init-dagger-with-workdir"))
 	_ = viper.BindPFlag("run-in-vendor", rootCmd.PersistentFlags().Lookup("run-in-vendor"))
 	_ = viper.BindPFlag("scan-all-env-vars", rootCmd.PersistentFlags().Lookup("scan-all-env-vars"))
+	_ = viper.BindPFlag("dot-env-file", rootCmd.PersistentFlags().Lookup("dot-env-file"))
 }
 
 func initConfig() {

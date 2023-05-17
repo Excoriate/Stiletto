@@ -57,7 +57,8 @@ func UpdateECSTaskContainerDefinition(client *ecs.Client,
 		ContainerDefinitions:    taskDef.TaskDefinition.ContainerDefinitions, // updated value.
 		RequiresCompatibilities: taskDef.TaskDefinition.RequiresCompatibilities,
 		Cpu:                     taskDef.TaskDefinition.Cpu,
-		Memory:                  taskDef.TaskDefinition.Memory}
+		Memory:                  taskDef.TaskDefinition.Memory,
+	}
 
 	updatedTask, err := client.RegisterTaskDefinition(context.TODO(), newTaskDefInput)
 	if err != nil {

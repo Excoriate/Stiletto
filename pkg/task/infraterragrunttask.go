@@ -197,6 +197,7 @@ func (t *InfraTerraGruntTask) SetEnvVarsFromJob(container *dagger.Container) (*d
 	customEnvVars := j.EnvVarsCustomScanned
 	envFromHost := j.EnvVarsAllScanned
 	specificToSet := j.EnvVarsToSet
+	dotEnvEnvVars := j.EnvVarsFromDotEnvFile
 
 	c := container
 
@@ -235,6 +236,13 @@ func (t *InfraTerraGruntTask) SetEnvVarsFromJob(container *dagger.Container) (*d
 		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, specificToSet)
 	} else {
 		ux.ShowInfo(t.UXPrefix, "No specific environment variables to set")
+	}
+
+	if len(dotEnvEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting environment variables from .env file")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, dotEnvEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No environment variables to set from .env file")
 	}
 
 	finalContainer, err := daggerio.SetEnvVarsInContainer(c, mergedEnvVars)

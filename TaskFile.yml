@@ -35,15 +35,6 @@ tasks:
   #-----------------------------------------------------------------------------------------
   # OPINIONATED TASKS
   #-----------------------------------------------------------------------------------------
-    cli:
-        desc: Run the CLI
-        cmds:
-            - |
-              go mod tidy
-              if [ -f "stiletto" ]; then rm stiletto; fi
-              go build -o stiletto
-            - ./stiletto {{.CLI_ARGS}}
-
     snapshot:
         cmds:
             - goreleaser check
@@ -100,17 +91,15 @@ tasks:
 
     pipeline-dagger-compile:
         desc: Compile the dagger pipeline, wrapping the CLI through TaskFile
-        dir: pipeline/dagger
         cmds:
             - |
               go mod tidy
-              if [ -f "pipeline-dagger" ]; then rm pipeline-dagger; fi
-              go build -o pipeline-dagger
-              if [ -f "../../pipeline-dagger" ]; then rm ../../pipeline-dagger; fi
-              mv pipeline-dagger ../../pipeline-dagger
+              if [ -f "stiletto" ]; then rm stiletto; fi
+              go build -o stiletto
+              chmod +x stiletto
 
     pipeline-dagger-run:
         desc: Run the dagger pipeline, wrapping the CLI through TaskFile
         deps: [pipeline-dagger-compile]
         cmds:
-            - ./pipeline-dagger {{.CLI_ARGS}}
+            - ./stiletto {{.CLI_ARGS}}

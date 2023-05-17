@@ -22,7 +22,8 @@ func New(cliArgs *config.CLIGlobalArgs, stack, jobName string) (*pipeline.Config
 		cliArgs.TargetDir, cliArgs.TaskName,
 		cliArgs.ScanEnvVarKeys,
 		cliArgs.EnvKeyValuePairsToSetString, cliArgs.ScanAWSKeys,
-		cliArgs.ScanTerraformVars, cliArgs.ScanAllEnvVars, cliArgs.InitDaggerWithWorkDirByDefault)
+		cliArgs.ScanTerraformVars, cliArgs.ScanAllEnvVars,
+		cliArgs.DotEnvFile, cliArgs.InitDaggerWithWorkDirByDefault)
 
 	if err != nil {
 		msg.ShowError("INIT", "Failed pipeline initialization", err)
@@ -51,6 +52,7 @@ func New(cliArgs *config.CLIGlobalArgs, stack, jobName string) (*pipeline.Config
 		ScanTerraformEnvVars: cliArgs.ScanTerraformVars,
 		EnvVarsToSet:         cliArgs.EnvKeyValuePairsToSetString,
 		EnvVarsToScan:        cliArgs.ScanEnvVarKeys,
+		DotEnvFile:           cliArgs.DotEnvFile,
 	})
 
 	if jobErr != nil {
