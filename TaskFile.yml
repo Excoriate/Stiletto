@@ -1,11 +1,18 @@
 ---
 version: '3'
 
-dotenv: ['.env.{{.TG_ENV}}.aws', '.env.{{.TG_ENV}}.terraform']
+dotenv: [.env]
+
+env:
+    MODULE: '{{.TG_MODULE}}'
 
 includes:
     common:
         taskfile: ./DevEx/taskfile/Taskfile.common.yml
+
+    terragrunt:
+        taskfile: ./DevEx/taskfile/Taskfile.terragrunt.yml
+        dir: ./examples/infra/terragrunt
 
 tasks:
   #-----------------------------------------------------------------------------------------
@@ -28,15 +35,6 @@ tasks:
   #-----------------------------------------------------------------------------------------
   # OPINIONATED TASKS
   #-----------------------------------------------------------------------------------------
-    cli:
-        desc: Run the CLI
-        cmds:
-            - |
-              go mod tidy
-              if [ -f "stiletto" ]; then rm stiletto; fi
-              go build -o stiletto
-            - ./stiletto {{.CLI_ARGS}}
-
     snapshot:
         cmds:
             - goreleaser check
@@ -46,3 +44,62 @@ tasks:
         cmds:
             - goreleaser check
             - export GITHUB_TOKEN=${GITHUB_TOKEN} && goreleaser release --rm-dist
+
+    tg-init:
+        desc: Run Terragrunt Init on selected module
+        cmds:
+            - task: terragrunt:init
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+    tg-plan:
+        desc: Run Terragrunt Plan on selected module
+        cmds:
+            - task: terragrunt:plan
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+    tg-plan-all:
+        desc: Run Terragrunt Plan (all) on selected module
+        cmds:
+            - task: terragrunt:plan-all
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+    tg-apply:
+        desc: Run Terragrunt Apply on selected module
+        cmds:
+            - task: terragrunt:apply
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+    tg-apply-all:
+        desc: Run Terragrunt Apply (All) on selected module
+        cmds:
+            - task: terragrunt:apply-all
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+
+    tg-destroy:
+        desc: Run Terragrunt Destroy on selected module
+        cmds:
+            - task: terragrunt:destroy
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+    tg-destroy-all:
+        desc: Run Terragrunt Destroy (all) on selected module
+        cmds:
+            - task: terragrunt:destroy-all
+              vars: {TG_WORKING_DIR: '{{.TG_MODULE}}'}
+
+
+    pipeline-dagger-compile:
+        desc: Compile the dagger pipeline, wrapping the CLI through TaskFile
+        cmds:
+            - |
+              go mod tidy
+              if [ -f "stiletto" ]; then rm stiletto; fi
+              go build -o stiletto
+              chmod +x stiletto
+
+    pipeline-dagger-run:
+        desc: Run the dagger pipeline, wrapping the CLI through TaskFile
+        deps: [pipeline-dagger-compile]
+        cmds:
+            - ./stiletto {{.CLI_ARGS}}

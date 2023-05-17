@@ -41,7 +41,7 @@ func (a *DockerBuildAction) BuildTagAndPush(dockerFile string) (Output, error) {
 	return Output{}, nil
 }
 
-func NewDockerBuildAction(task CoreTasker) DockerBuildActions {
+func NewDockerAction(task CoreTasker) DockerBuildActions {
 	return &DockerBuildAction{
 		Task:   task,
 		prefix: "DOCKER:ACTION-BUILD",

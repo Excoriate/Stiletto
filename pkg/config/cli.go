@@ -1,6 +1,7 @@
 package config
 
 import (
+	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/spf13/viper"
 )
@@ -15,44 +16,58 @@ type CLIGlobalArgs struct {
 	EnvKeyValuePairsToSetString    map[string]string
 	ScanAWSKeys                    bool
 	ScanTerraformVars              bool
+	DotEnvFile                     string
+	ScanAllEnvVars                 bool
 	CustomCommands                 []string
 	InitDaggerWithWorkDirByDefault bool
 	RunInVendor                    bool
 }
 
-func GetCLIGlobalArgs() CLIGlobalArgs {
+func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
+	cfg := Cfg{}
+	defaultEmptyMap := make(map[string]interface{})
 
-	keValuePairsFromViper := viper.Get("set-env")
-	var envKeyValuePairsToSet map[string]interface{}
-
-	if keValuePairsFromViper == nil {
-		envKeyValuePairsToSet = make(map[string]interface{})
-	} else {
-		envKeyValuePairsToSet = keValuePairsFromViper.(map[string]interface{})
+	// 'set-env' option
+	keValuePairsFromViper, err := cfg.GetFromViperOrDefault("set-env", defaultEmptyMap)
+	if err != nil {
+		return CLIGlobalArgs{}, errors.NewArgumentError(
+			"Error trying to parse or resolve argument 'set-env'", err)
 	}
 
+	setEnvValue := keValuePairsFromViper.Value.(map[string]interface{})
+
+	// 'scan-env' option
+	defaultEmptySliceString := make([]string, 0)
+	scanEnvVarKeysFromViper, err := cfg.GetFromViperOrDefault("scan-env", defaultEmptySliceString)
+	if err != nil {
+		return CLIGlobalArgs{}, errors.NewArgumentError(
+			"Error trying to parse or resolve argument 'scan-env'", err)
+	}
+
+	scanEnvVarKeys := scanEnvVarKeysFromViper.Value.([]string)
+
 	args := CLIGlobalArgs{
-		WorkingDir: viper.Get("work-dir").(string),
-		MountDir:   viper.Get("mount-dir").(string),
-		TargetDir:  viper.Get("target-dir").(string),
-		TaskName:   viper.Get("task").(string),
-		//ScanEnvVarKeys: viper.Get("scan-env").([]string),
-		ScanEnvVarKeys: []string{},
-		//EnvKeyValuePairsToSet:          viper.Get("set-env").(map[string]interface{}),
-		EnvKeyValuePairsToSet: envKeyValuePairsToSet,
-		ScanAWSKeys:           viper.Get("scan-aws-keys").(bool),
-		ScanTerraformVars:     viper.Get("scan-terraform-vars").(bool),
+		WorkingDir:            viper.GetString("work-dir"),
+		MountDir:              viper.GetString("mount-dir"),
+		TargetDir:             viper.GetString("target-dir"),
+		TaskName:              viper.GetString("task"),
+		ScanEnvVarKeys:        scanEnvVarKeys,
+		EnvKeyValuePairsToSet: setEnvValue,
+		ScanAWSKeys:           viper.GetBool("scan-aws-keys"),
+		ScanTerraformVars:     viper.GetBool("scan-terraform-vars"),
+		ScanAllEnvVars:        viper.GetBool("scan-all-env-vars"),
+		DotEnvFile:            viper.GetString("dot-env-file"),
 		//CustomCommands:                 viper.Get("custom-cmds").([]string),
 		CustomCommands:                 []string{},
-		InitDaggerWithWorkDirByDefault: viper.Get("init-dagger-with-workdir").(bool),
-		RunInVendor:                    viper.Get("run-in-vendor").(bool),
+		InitDaggerWithWorkDirByDefault: viper.GetBool("init-dagger-with-workdir"),
+		RunInVendor:                    viper.GetBool("run-in-vendor"),
 	}
 
 	for k, v := range args.EnvKeyValuePairsToSet {
 		args.EnvKeyValuePairsToSetString[k] = v.(string)
 	}
 
-	return args
+	return args, nil
 }
 
 func ShowCLITitle() {

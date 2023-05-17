@@ -20,6 +20,7 @@ type CoreTasker interface {
 	GetJobContainerDefault() *dagger.Container
 	GetJobEnvVars() map[string]string
 	SetEnvVars(envVars []map[string]string, container *dagger.Container) (*dagger.Container, error)
+	SetEnvVarsFromJob(container *dagger.Container) (*dagger.Container, error)
 	AuthWithRegistry(c *dagger.Client, container *dagger.Container,
 		opt daggerio.RegistryAuthOptions) (*dagger.Container,
 		error)
@@ -30,6 +31,9 @@ type CoreTasker interface {
 	MountDir(targetDir string, client *dagger.Client, container *dagger.
 	Container,
 		filesPreRequisites []string, ctx context.Context) (*dagger.Container, error)
+
+	RunCmdInContainer(container *dagger.Container, commands [][]string,
+		stdOutEnabled bool, ctx context.Context) error
 }
 
 type Runner struct {

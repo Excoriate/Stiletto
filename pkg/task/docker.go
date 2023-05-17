@@ -22,7 +22,7 @@ func RunTaskDocker(opt InitOptions) error {
 		t := NewTaskDocker(c, actionCMDs, &opt, "DOCKER-BUILD")
 
 		// New action to execute (mapped to the --task passed from the command line)
-		a := NewDockerBuildAction(t)
+		a := NewDockerAction(t)
 
 		// Run the action
 		_, err := a.BuildTagAndPush("Dockerfile")

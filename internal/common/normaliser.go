@@ -22,3 +22,7 @@ func IsNotNilAndNotEmpty(target interface{}) bool {
 	targetNormalised := NormaliseNoSpaces(target.(string))
 	return targetNormalised != ""
 }
+
+func RemoveDoubleQuotes(target string) string {
+	return strings.Trim(target, "\"")
+}

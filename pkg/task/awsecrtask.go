@@ -5,6 +5,7 @@ import (
 	"dagger.io/dagger"
 	"fmt"
 	"github.com/Excoriate/stiletto/internal/daggerio"
+	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/Excoriate/stiletto/internal/filesystem"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/Excoriate/stiletto/pkg/job"
@@ -16,6 +17,116 @@ type AWSECRTask struct {
 	Cfg      *Task
 	Actions  []string
 	UXPrefix string
+}
+
+func (t *AWSECRTask) RunCmdInContainer(container *dagger.Container, commands [][]string,
+	stdOutEnabled bool, ctx context.Context) error {
+	ux := tui.NewTUIMessage()
+
+	if len(commands) != 0 {
+		for _, cmd := range commands {
+			ux.ShowInfo(t.UXPrefix, fmt.Sprintf("Running command %s", cmd))
+
+			if !stdOutEnabled {
+				_, err := container.
+					WithExec(cmd).
+					ExitCode(ctx)
+
+				if err != nil {
+					ux.ShowError(t.UXPrefix, fmt.Sprintf("Failed to run command %s", cmd), err)
+					return errors.NewTaskExecutionError(fmt.Sprintf("Failed to run command %s",
+						cmd), err)
+				}
+			} else {
+				_, err := container.
+					WithExec(cmd).
+					Stdout(ctx)
+
+				if err != nil {
+					ux.ShowError(t.UXPrefix, fmt.Sprintf("Failed to run command %s", cmd), err)
+					return errors.NewTaskExecutionError(fmt.Sprintf("Failed to run command %s",
+						cmd), err)
+				}
+			}
+		}
+	} else {
+		_, err := container.
+			WithExec([]string{"ls", "-ltrh"}).
+			ExitCode(ctx)
+
+		if err != nil {
+			ux.ShowError(t.UXPrefix, fmt.Sprintf("Failed to run command %s", "ls -la"), err)
+			return errors.NewTaskExecutionError(fmt.Sprintf("Failed to run command %s",
+				"ls -ltrh"), err)
+		}
+	}
+
+	return nil
+}
+
+func (t *AWSECRTask) SetEnvVarsFromJob(container *dagger.Container) (*dagger.Container, error) {
+	ux := t.Cfg.PipelineCfg.UXMessage
+	j := t.GetJob()
+
+	awsEnvVars := j.EnvVarsAWSScanned
+	tfEnvVars := j.EnvVarsTerraformScanned
+	customEnvVars := j.EnvVarsCustomScanned
+	envFromHost := j.EnvVarsAllScanned
+	specificToSet := j.EnvVarsToSet
+	dotEnvEnvVars := j.EnvVarsFromDotEnvFile
+
+	c := container
+
+	var mergedEnvVars map[string]string
+
+	if len(awsEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting AWS environment variables from the job")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, awsEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No AWS environment variables to set from the job")
+	}
+
+	if len(tfEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting Terraform environment variables from the job")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, tfEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No Terraform environment variables to set from the job")
+	}
+
+	if len(customEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting custom environment variables from the job")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, customEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No custom environment variables to set from the job")
+	}
+
+	if len(envFromHost) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting environment variables from the host")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, envFromHost)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No environment variables to set from the host")
+	}
+
+	if len(specificToSet) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting specific environment variables")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, specificToSet)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No specific environment variables to set")
+	}
+
+	if len(dotEnvEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting environment variables from .env file")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, dotEnvEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No environment variables to set from .env file")
+	}
+
+	finalContainer, err := daggerio.SetEnvVarsInContainer(c, mergedEnvVars)
+	if err != nil {
+		return nil, err
+	}
+
+	return finalContainer, nil
 }
 
 func (t *AWSECRTask) MountDir(targetDir string, client *dagger.Client, container *dagger.

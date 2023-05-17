@@ -149,6 +149,27 @@ func isTFEnvVarsExported(isTFEnvVarsToScan bool) error {
 	return nil
 }
 
+func isDotEnvFileValidToScan(isScanFromDotEnvFileEnabled bool, dotEnvFilePath string) (map[string]string, error) {
+	if !isScanFromDotEnvFileEnabled {
+		envVars, err := filesystem.GetEnvVarsFromDotFile(dotEnvFilePath)
+		if err != nil {
+			errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
+				"there is no .env file in the working directory: %s", dotEnvFilePath)
+			return nil, errors.NewPipelineConfigurationError(errMsg, err)
+		}
+
+		if len(envVars) == 0 {
+			errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
+				"there is no env vars in the .env file: %s", dotEnvFilePath)
+			return nil, errors.NewPipelineConfigurationError(errMsg, err)
+		}
+
+		return envVars, nil
+	}
+
+	return nil, nil
+}
+
 func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error {
 	ux := tui.TUIMessage{}
 
@@ -214,16 +235,30 @@ func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error 
 		return err
 	}
 
+	if _, err := isDotEnvFileValidToScan(args.IsEnvVarsToScanFromDotEnvFile,
+		args.EnvVarsDotEnvFilePath); err != nil {
+		ux.ShowError("VALIDATION", "Preconditions failed", err)
+		return err
+	}
+
 	return nil
 }
 
 func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []string,
 	envVarsMapToSet map[string]string, isAWSKeysToScan bool, isTFScanEnabled bool,
+	isAllEnvVarsToScan bool, dotEnvFile string,
 	initDaggerWithWorkDirByDefault bool) (*Config,
 	error) {
 
 	logPrinter := logger.NewLogger()
 	logPrinter.InitLogger()
+
+	var isEnvVarsToScanFromDotEnvFile bool
+	if dotEnvFile == "" {
+		isEnvVarsToScanFromDotEnvFile = false
+	} else {
+		isEnvVarsToScanFromDotEnvFile = true
+	}
 
 	args := config.PipelineOptions{
 		// Key directories
@@ -236,11 +271,15 @@ func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []strin
 		// Specific environmental options passed.
 		EnvVarsToScanAndSet:   envVarKeysToScan,
 		EnvKeyValuePairsToSet: envVarsMapToSet,
+		EnvVarsDotEnvFilePath: dotEnvFile,
 		EnvVarsAWSKeysToScan:  map[string]string{},
+		EnvVarsFromDotEnvFile: map[string]string{},
 		// Scan options
 		IsAWSEnvVarKeysToScanEnabled:   isAWSKeysToScan,
 		IsTerraformVarsScanEnabled:     isTFScanEnabled,
 		InitDaggerWithWorkDirByDefault: initDaggerWithWorkDirByDefault,
+		IsEnvVarsToScanFromDotEnvFile:  isEnvVarsToScanFromDotEnvFile,
+		IsAllEnvVarsToScanEnabled:      isAllEnvVarsToScan,
 	}
 
 	if err := CheckPreConditions(&args, logPrinter); err != nil {

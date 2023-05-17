@@ -37,7 +37,7 @@ tasks:
 
     init:
         deps:
-            - task: check-filesystem
+            - task: check-workdir
               vars: {TG_WORKING_DIR: '{{.TG_WORKING_DIR}}'}
         desc: Run Terragrunt init
         cmds:
@@ -81,6 +81,30 @@ tasks:
               terragrunt plan
         silent: true
 
+    plan-all:
+        desc: Run Terragrunt plan all
+        deps:
+            - task: init
+              vars: {TG_WORKING_DIR: '{{.TG_WORKING_DIR}}'}
+        cmds:
+            - |
+              echo "[info] Working directory passed: {{.TG_WORKING_DIR}}"
+              echo "[info] Full path: $(pwd)/{{.TG_WORKING_DIR}}"
+
+              cd {{.TG_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command PLAN (all)"
+              echo "============================================================"
+
+              terragrunt run-all plan
+        silent: true
+
+
     apply:
         desc: Run Terragrunt apply
         deps:
@@ -102,6 +126,29 @@ tasks:
               echo "============================================================"
 
               terragrunt apply -auto-approve
+        silent: true
+
+    apply-all:
+        desc: Run Terragrunt apply All
+        deps:
+            - task: init
+              vars: {TG_WORKING_DIR: '{{.TG_WORKING_DIR}}'}
+        cmds:
+            - |
+              echo "[info] Working directory passed: {{.TG_WORKING_DIR}}"
+              echo "[info] Full path: $(pwd)/{{.TG_WORKING_DIR}}"
+
+              cd {{.TG_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command APPLY (all)"
+              echo "============================================================"
+
+              terragrunt run-all apply -auto-approve
         silent: true
 
     destroy:
@@ -126,6 +173,31 @@ tasks:
 
               terragrunt destroy -auto-approve
         silent: true
+
+
+    destroy-all:
+        desc: Run Terragrunt destroy all
+        deps:
+            - task: init
+              vars: {TG_WORKING_DIR: '{{.TG_WORKING_DIR}}'}
+        cmds:
+            - |
+              echo "[info] Working directory passed: {{.TG_WORKING_DIR}}"
+              echo "[info] Full path: $(pwd)/{{.TG_WORKING_DIR}}"
+
+              cd {{.TG_WORKING_DIR}}
+
+              echo "       _______"
+              echo "      /       \\"
+              echo "      |   0   |"
+              echo "      |   _   |"
+              echo "      \_______/"
+              echo "Running Terragrunt command DESTROY (all)"
+              echo "============================================================"
+
+              terragrunt run-all destroy -auto-approve
+        silent: true
+
 
     lint:
         desc: Run Terragrunt Linters and Validators

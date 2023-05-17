@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Excoriate/stiletto/cmd/cli/aws"
 	"github.com/Excoriate/stiletto/cmd/cli/docker"
+	"github.com/Excoriate/stiletto/cmd/cli/infra"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"os"
@@ -20,6 +21,8 @@ var (
 	GlobalCustomCommands              []string
 	GlobalScanAWSKeys                 bool
 	GlobalScanTFVars                  bool
+	GlobalScanAllEnvVars              bool
+	GlobalDotEnvFile                  string
 	GlobalCustomCMDs                  []string
 	GlobalDaggerInitClientWithWorkDir bool
 	GlobalRunInVendor                 bool
@@ -98,6 +101,11 @@ func addPersistentFlags() {
 		"Scan terraform exported environment variables and set it into the generated containers ("+
 			"TG_VAR_).")
 
+	rootCmd.PersistentFlags().BoolVarP(&GlobalScanAllEnvVars,
+		"scan-all-env-vars",
+		"", false,
+		"Scan all environment variables and set them into the generated containers.")
+
 	rootCmd.PersistentFlags().StringSliceVarP(&GlobalCustomCMDs,
 		"custom-cmds",
 		"u", []string{},
@@ -113,6 +121,11 @@ func addPersistentFlags() {
 		"", false,
 		"Run in vendor mode. If so, it'll limit some 'host' specific commands to run.")
 
+	rootCmd.PersistentFlags().StringVarP(&GlobalDotEnvFile,
+		"dot-env-file",
+		"", "",
+		"Scan environment variables from a .env file and set them into the generated containers.")
+
 	_ = viper.BindPFlag("task", rootCmd.PersistentFlags().Lookup("task"))
 	_ = viper.BindPFlag("work-dir", rootCmd.PersistentFlags().Lookup("work-dir"))
 	_ = viper.BindPFlag("target-dir", rootCmd.PersistentFlags().Lookup("target-dir"))
@@ -125,6 +138,8 @@ func addPersistentFlags() {
 	_ = viper.BindPFlag("init-dagger-with-workdir", rootCmd.PersistentFlags().Lookup(
 		"init-dagger-with-workdir"))
 	_ = viper.BindPFlag("run-in-vendor", rootCmd.PersistentFlags().Lookup("run-in-vendor"))
+	_ = viper.BindPFlag("scan-all-env-vars", rootCmd.PersistentFlags().Lookup("scan-all-env-vars"))
+	_ = viper.BindPFlag("dot-env-file", rootCmd.PersistentFlags().Lookup("dot-env-file"))
 }
 
 func initConfig() {
@@ -163,8 +178,9 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	addPersistentFlags()
 
-	rootCmd.AddCommand(docker.DockerCmd)
+	rootCmd.AddCommand(docker.Cmd)
 	rootCmd.AddCommand(aws.Cmd)
+	rootCmd.AddCommand(infra.Cmd)
 
 	_ = rootCmd.MarkFlagRequired("task")
 	_ = rootCmd.MarkFlagRequired("workdir")

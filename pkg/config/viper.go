@@ -6,6 +6,7 @@ import (
 	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/spf13/viper"
 	"os"
+	"reflect"
 )
 
 type CfgValue struct {
@@ -19,12 +20,14 @@ type Cfg struct {
 
 type CfgRetriever interface {
 	GetFromViper(key string) (CfgValue, error)
+	GetFromViperOrDefault(key string, defaultValue interface{}) (CfgValue, error)
 	GetFromEnvVars(key string) (CfgValue, error)
 	GetFromAny(key string) (CfgValue, error)
 	IsRunningInVendorAutomation() bool
+	ValidateCfgKey(key string) (string, error)
 }
 
-func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
+func (c *Cfg) ValidateCfgKey(key string) (string, error) {
 	var keyToSeek string
 
 	if key == "" {
@@ -34,11 +37,53 @@ func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
 	}
 
 	if keyToSeek == "" {
-		return CfgValue{}, errors.NewInternalPipelineError(fmt.Sprintf(
+		return "", errors.NewInternalPipelineError(fmt.Sprintf(
 			"Failed to get config value (from viper) for key: %s. It's passed empty", keyToSeek))
 	}
 
 	keyNormalised := common.NormaliseNoSpaces(keyToSeek)
+	return keyNormalised, nil
+}
+
+func (c *Cfg) GetFromViperOrDefault(key string, defaultValue interface{}) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
+
+	value := viper.Get(keyNormalised)
+	if value == nil {
+		return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+	}
+
+	switch v := value.(type) {
+	case string:
+		if v == "" {
+			return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+		}
+	case map[string]interface{}:
+		if len(v) == 0 {
+			return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+		}
+	case []string:
+		if len(v) == 0 {
+			return CfgValue{Key: keyNormalised, Value: defaultValue}, nil
+		}
+	default:
+		// Check if value and defaultValue are of the same type
+		if reflect.TypeOf(value) != reflect.TypeOf(defaultValue) {
+			return CfgValue{}, errors.NewPipelineConfigurationError(
+				"type mismatch between value and defaultValue", nil)
+		}
+	}
+
+	return CfgValue{Key: keyNormalised, Value: value}, nil
+}
+func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
 
 	value := viper.Get(keyNormalised)
 
@@ -56,20 +101,10 @@ func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
 }
 
 func (c *Cfg) GetFromEnvVars(key string) (CfgValue, error) {
-	var keyToSeek string
-
-	if key == "" {
-		keyToSeek = c.key
-	} else {
-		keyToSeek = key
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
 	}
-
-	if keyToSeek == "" {
-		return CfgValue{}, errors.NewInternalPipelineError(fmt.Sprintf(
-			"Failed to get config (from env vars) value for key: %s. It's passed empty", keyToSeek))
-	}
-
-	keyNormalised := common.NormaliseNoSpaces(keyToSeek)
 
 	value := os.Getenv(keyNormalised)
 	if common.IsNotNilAndNotEmpty(value) {
@@ -81,20 +116,10 @@ func (c *Cfg) GetFromEnvVars(key string) (CfgValue, error) {
 }
 
 func (c *Cfg) GetFromAny(key string) (CfgValue, error) {
-	var keyToSeek string
-
-	if key == "" {
-		keyToSeek = c.key
-	} else {
-		keyToSeek = key
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
 	}
-
-	if keyToSeek == "" {
-		return CfgValue{}, errors.NewInternalPipelineError(fmt.Sprintf(
-			"Failed to get config (from any) value for key: %s. It's passed empty", keyToSeek))
-	}
-
-	keyNormalised := common.NormaliseNoSpaces(keyToSeek)
 
 	value := viper.Get(keyNormalised)
 

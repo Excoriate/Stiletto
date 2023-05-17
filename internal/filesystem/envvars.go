@@ -3,6 +3,7 @@ package filesystem
 import (
 	"errors"
 	"fmt"
+	"github.com/Excoriate/stiletto/internal/common"
 	"os"
 	"strings"
 )
@@ -43,15 +44,30 @@ func AreEnvVarsSet(keys []string) error {
 }
 
 // FetchEnvVarsAsMap checks if the environment variables exist and returns them as a map.
-func FetchEnvVarsAsMap(keys []string) (EnvVars, error) {
+func FetchEnvVarsAsMap(keys []string, optionalKeys []string) (EnvVars, error) {
 	result := make(EnvVars)
 
 	for _, key := range keys {
 		value, ok := os.LookupEnv(key)
 		if !ok {
-			return nil, errors.New(fmt.Sprintf("Environment variable %s does not exist", key))
+			if common.IsKeyInMapOptional(key, optionalKeys) {
+				continue
+			} else {
+				return nil, errors.New(fmt.Sprintf("Environment variable %s does not exist", key))
+			}
 		}
-		result[key] = value
+		result[key] = common.RemoveDoubleQuotes(value)
+	}
+
+	return result, nil
+}
+
+func FetchAllEnvVarsFromHost() (EnvVars, error) {
+	result := make(EnvVars)
+
+	for _, env := range os.Environ() {
+		keyValue := strings.Split(env, "=")
+		result[keyValue[0]] = common.RemoveDoubleQuotes(keyValue[1])
 	}
 
 	return result, nil
@@ -59,16 +75,32 @@ func FetchEnvVarsAsMap(keys []string) (EnvVars, error) {
 
 // ScanAWSCredentialsEnvVars scans the environment variables for AWS credentials.
 func ScanAWSCredentialsEnvVars() (EnvVars, error) {
-	keys := []string{
-		"AWS_ACCESS_KEY_ID",
-		"AWS_SECRET_ACCESS_KEY",
+	//keys := []string{
+	//	"AWS_ACCESS_KEY_ID",
+	//	"AWS_SECRET_ACCESS_KEY",
+	//	"AWS_SESSION_TOKEN",
+	//	"AWS_SECURITY_TOKEN",
+	//	"AWS_DEFAULT_REGION",
+	//	"AWS_REGION",
+	//	"AWS_PROFILE",
+	//}
+
+	mandatoryKeys := []string{"AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY"}
+
+	// Here' it's scanned the required environment variables
+	envs, err := FetchEnvVarsAsMap(mandatoryKeys, []string{
+		"AWS_REGION", "AWS_DEFAULT_REGION"})
+
+	if err != nil {
+		return nil, err
 	}
 
-	if err := AreEnvVarsSet(keys); err != nil {
-		return nil, fmt.Errorf("AWS credentials are not set as environment variables: %w", err)
+	// Precedence rules
+	if defaultRegion, ok := envs["AWS_DEFAULT_REGION"]; ok {
+		envs["AWS_REGION"] = defaultRegion
 	}
 
-	return FetchEnvVarsAsMap(keys)
+	return envs, nil
 }
 
 // FetchEnvVarsWithPrefix fetches environment variables that start with the specified prefix
@@ -85,7 +117,7 @@ func FetchEnvVarsWithPrefix(prefix string) (EnvVars, error) {
 			if value == "" {
 				return nil, errors.New(fmt.Sprintf("Environment variable %s has an empty value", key))
 			}
-			result[key] = value
+			result[key] = common.RemoveDoubleQuotes(value)
 		}
 	}
 
@@ -99,6 +131,11 @@ func FetchEnvVarsWithPrefix(prefix string) (EnvVars, error) {
 // ScanTerraformEnvVars fetches environment variables that start with the prefix "TF_VAR_"
 func ScanTerraformEnvVars() (EnvVars, error) {
 	return FetchEnvVarsWithPrefix("TF_VAR_")
+}
+
+// ScanWithCustomPrefix fetches environment variables that start with the specified prefix
+func ScanWithCustomPrefix(prefix string) (EnvVars, error) {
+	return FetchEnvVarsWithPrefix(prefix)
 }
 
 // FetchAWSEnvVars fetches environment variables that start with the prefix "AWS_"
@@ -122,7 +159,7 @@ func MergeEnvVars(envVars ...EnvVars) EnvVars {
 	for _, env := range envVars {
 		for key, value := range env {
 			if key != "" && value != "" {
-				result[key] = value
+				result[key] = common.RemoveDoubleQuotes(value)
 			}
 		}
 	}
