@@ -23,10 +23,10 @@ func RunTaskInfraTerraGrunt(opt InitOptions) error {
 	j := opt.JobCfg
 
 	actionCMDs := opt.ActionCommands
+	actionPrefix := fmt.Sprintf("%s:%s", taskPrefix, taskSelector)
 
 	switch taskSelector {
 	case "PLAN":
-		actionPrefix := fmt.Sprintf("%s:%s", taskPrefix, taskSelector)
 		// New (core) instance of a task
 		c := NewTask(p, j, actionCMDs, &opt)
 
@@ -41,6 +41,56 @@ func RunTaskInfraTerraGrunt(opt InitOptions) error {
 		if err != nil {
 			return err
 		}
+
+	case "APPLY":
+		// New (core) instance of a task
+		c := NewTask(p, j, actionCMDs, &opt)
+
+		// New specific instance of a task (E.g.: Docker, AWS, etc.)
+		t := NewTaskInfraTerraGrunt(c, actionCMDs, &opt, actionPrefix)
+
+		// New action to execute (mapped to the --task passed from the command line)
+		a := NewInfraTerraGruntAction(t, actionPrefix)
+
+		// Run the action
+		_, err := a.Apply()
+		if err != nil {
+			return err
+		}
+
+	case "DESTROY":
+		// New (core) instance of a task
+		c := NewTask(p, j, actionCMDs, &opt)
+
+		// New specific instance of a task (E.g.: Docker, AWS, etc.)
+		t := NewTaskInfraTerraGrunt(c, actionCMDs, &opt, actionPrefix)
+
+		// New action to execute (mapped to the --task passed from the command line)
+		a := NewInfraTerraGruntAction(t, actionPrefix)
+
+		// Run the action
+		_, err := a.Destroy()
+		if err != nil {
+			return err
+		}
+
+	case "VALIDATE":
+		// New (core) instance of a task
+		c := NewTask(p, j, actionCMDs, &opt)
+
+		// New specific instance of a task (E.g.: Docker, AWS, etc.)
+		t := NewTaskInfraTerraGrunt(c, actionCMDs, &opt, actionPrefix)
+
+		// New action to execute (mapped to the --task passed from the command line)
+		a := NewInfraTerraGruntAction(t, actionPrefix)
+
+		// Run the action
+		_, err := a.Validate()
+		if err != nil {
+			return err
+		}
+
 	}
+
 	return nil
 }

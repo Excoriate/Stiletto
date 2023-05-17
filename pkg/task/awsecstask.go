@@ -73,6 +73,7 @@ func (t *AWSECSTask) SetEnvVarsFromJob(container *dagger.Container) (*dagger.Con
 	customEnvVars := j.EnvVarsCustomScanned
 	envFromHost := j.EnvVarsAllScanned
 	specificToSet := j.EnvVarsToSet
+	dotEnvEnvVars := j.EnvVarsFromDotEnvFile
 
 	c := container
 
@@ -113,7 +114,19 @@ func (t *AWSECSTask) SetEnvVarsFromJob(container *dagger.Container) (*dagger.Con
 		ux.ShowInfo(t.UXPrefix, "No specific environment variables to set")
 	}
 
-	return daggerio.SetEnvVarsInContainer(c, mergedEnvVars)
+	if len(dotEnvEnvVars) > 0 {
+		ux.ShowInfo(t.UXPrefix, "Setting environment variables from .env file")
+		mergedEnvVars = filesystem.MergeEnvVars(mergedEnvVars, dotEnvEnvVars)
+	} else {
+		ux.ShowInfo(t.UXPrefix, "No environment variables to set from .env file")
+	}
+
+	finalContainer, err := daggerio.SetEnvVarsInContainer(c, mergedEnvVars)
+	if err != nil {
+		return nil, err
+	}
+
+	return finalContainer, nil
 }
 
 func (t *AWSECSTask) MountDir(targetDir string, client *dagger.Client, container *dagger.
