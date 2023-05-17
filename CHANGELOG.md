@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.2.2](https://github.com/Excoriate/Stiletto/compare/v0.2.1...v0.2.2) (2023-05-17)
+
+
+### Features
+
+* add support for dotenv files, refactor CLI args from job init ([ad2a210](https://github.com/Excoriate/Stiletto/commit/ad2a21022cf912b554627af9334fa9f2f7fe2c09))
+
+
+### Refactoring
+
+* add command runner function ([506f38b](https://github.com/Excoriate/Stiletto/commit/506f38ba74310376ffa059bef41914e111bd563f))
+* add missing tg commands on task ([d0cfa2e](https://github.com/Excoriate/Stiletto/commit/d0cfa2ea5f00caaab4d5116628284a55eeb7524e))
+* Add shared validation function for validate viper key config ([3cd4953](https://github.com/Excoriate/Stiletto/commit/3cd4953622592f550c44ec7d52afb4855ba316ec))
+* add tg command, working version ([01639e4](https://github.com/Excoriate/Stiletto/commit/01639e4cb3867ce3204acad9a6c600c834c24221))
+
+
+### Other
+
+* adjust release-please config ([016d8d9](https://github.com/Excoriate/Stiletto/commit/016d8d9f1262be40ea4f5da087e4e91522d81c6e))
+
 ## [0.2.1](https://github.com/Excoriate/Stiletto/compare/v0.2.0...v0.2.1) (2023-04-10)
 
 
