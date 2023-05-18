@@ -150,7 +150,7 @@ func isTFEnvVarsExported(isTFEnvVarsToScan bool) error {
 }
 
 func isDotEnvFileValidToScan(isScanFromDotEnvFileEnabled bool, dotEnvFilePath string) (map[string]string, error) {
-	if !isScanFromDotEnvFileEnabled {
+	if isScanFromDotEnvFileEnabled {
 		envVars, err := filesystem.GetEnvVarsFromDotFile(dotEnvFilePath)
 		if err != nil {
 			errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
