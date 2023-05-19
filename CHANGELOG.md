@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/Excoriate/Stiletto/compare/v0.2.3...v0.2.4) (2023-05-19)
+
+
+### Bug Fixes
+
+* fix ecr command, fix .env wrong asked file when option isn't set ([a2aac80](https://github.com/Excoriate/Stiletto/commit/a2aac8066dad4144ee8a59dd01119ac34bd22649))
+
 ## [0.2.3](https://github.com/Excoriate/Stiletto/compare/v0.2.2...v0.2.3) (2023-05-18)
 
 
