@@ -193,8 +193,13 @@ func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error 
 		args.WorkDir = "."
 	}
 
-	workDirAbsolute, _ := filesystem.PathToAbsolute(args.WorkDir)
-	args.WorkDirPath = workDirAbsolute
+	workDirPath, err := filesystem.PathGetWorkDirAbsolute(args.WorkDir)
+	if err != nil {
+		ux.ShowError("VALIDATION", "Preconditions failed", err)
+		return err
+	}
+
+	args.WorkDirPath = workDirPath
 
 	// 2. Validate the mount directory.
 	if mountDirErr := isMountDirValid(args.MountDir, args.WorkDir); mountDirErr != nil {

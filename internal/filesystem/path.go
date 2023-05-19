@@ -26,3 +26,30 @@ func PathToAbsolute(path string) (string, error) {
 
 	return absolutePath, nil
 }
+
+func PathGetWorkDirAbsolute(workDir string) (string, error) {
+	var workDirPath string
+	if workDir == "." {
+		wd, err := os.Getwd()
+
+		if err != nil {
+			return "", fmt.Errorf("error getting current working directory: %s", err.Error())
+		}
+
+		workDirPath = wd
+	} else {
+		// if it's a relative path, convert it to an absolute path
+		if !filepath.IsAbs(workDir) {
+			wd, err := os.Getwd()
+			if err != nil {
+				return "", fmt.Errorf("error getting current working directory: %s", err.Error())
+			}
+
+			workDirPath = filepath.Join(wd, workDir)
+		} else {
+			workDirPath = workDir
+		}
+	}
+
+	return workDirPath, nil
+}
