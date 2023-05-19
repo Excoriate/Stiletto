@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/Excoriate/Stiletto/compare/v0.2.2...v0.2.3) (2023-05-18)
+
+
+### Bug Fixes
+
+* remove invalid condition when it's checking the pipeline mandatory settings ([1557f40](https://github.com/Excoriate/Stiletto/commit/1557f405b96e0c6f81b8c4b8bb9fd03f6fc83e32))
+
 ## [0.2.2](https://github.com/Excoriate/Stiletto/compare/v0.2.1...v0.2.2) (2023-05-17)
 
 
