@@ -32,6 +32,7 @@ type AWSECRPushActionArgs struct {
 	Repository        string
 	Registry          string
 	Tag               string
+	GenerateRandomTag bool
 	RunECRLoginInHost bool
 }
 
@@ -62,11 +63,14 @@ func getBuildTagAndPushActionArgs(uxLog tui.TUIMessenger) (AWSECRPushActionArgs,
 	tag, err := cfg.GetFromAny("tag")
 	if err != nil {
 		warnMsg := fmt.Sprintf("Failed to get 'buildTagAndPush' arguments, " +
-			"tag could not be met. 'Latest' will be used.")
+			"tag could not be met. 'Latest' will be used if the --generate-random-tag option is" +
+			" not set.")
 		uxLog.ShowWarning("AWS:ECR:PUSH", warnMsg)
 
-		tag.Value = "latest"
+		tag.Value = ""
 	}
+
+	tagToSet := tag.Value.(string)
 
 	repository, err := cfg.GetFromAny("ecr-repository")
 	if err != nil {
@@ -83,13 +87,40 @@ func getBuildTagAndPushActionArgs(uxLog tui.TUIMessenger) (AWSECRPushActionArgs,
 			" provides (E.g.: GitHub action)")
 	}
 
+	generateRandomTag, err := cfg.GetFromViperOrDefault("generate-random-tag", false)
+	if err != nil {
+		errMsg := fmt.Sprintf("Failed to get 'buildTagAndPush' arguments, " +
+			"generate-random-tag could not be met")
+		uxLog.ShowError("AWS:ECR:PUSH", errMsg, err)
+		return AWSECRPushActionArgs{}, errors.NewActionCfgError(errMsg, err)
+	}
+
+	generateRandomTagValue := generateRandomTag.Value.(bool)
+
+	if generateRandomTagValue && tagToSet != "" {
+		errMsg := fmt.Sprintf("Failed to get 'buildTagAndPush' arguments, " +
+			"generate-random-tag and tag cannot be used together")
+		uxLog.ShowError("AWS:ECR:PUSH", errMsg, err)
+		return AWSECRPushActionArgs{}, errors.NewActionCfgError(errMsg, err)
+	}
+
+	// If tag is not set and generate-random-tag is not set, default to 'latest'
+	if tagToSet == "" && !generateRandomTagValue {
+		tagToSet = "latest"
+	}
+
+	// If generate-random-tag is set, and tag is not set, generate a random tag.
+	if generateRandomTagValue && tagToSet == "" {
+		tagToSet = common.GenerateRandomString(5, true)
+	}
+
 	return AWSECRPushActionArgs{
 		AWSRegion:         awsCredentialsCfg.Region,
 		AWSAccessKey:      awsCredentialsCfg.AccessKeyID,
 		AWSSecretKey:      awsCredentialsCfg.SecretAccessKey,
 		Repository:        repository.Value.(string),
 		Registry:          registry.Value.(string),
-		Tag:               tag.Value.(string),
+		Tag:               tagToSet,
 		RunECRLoginInHost: !runInVendor,
 	}, nil
 }
@@ -109,7 +140,7 @@ func (a *AWSECRPushAction) DeployNewTask() (Output, error) {
 	ctx := a.Task.GetJob().Ctx
 	container := a.Task.GetJobContainerDefault()
 	client := a.Task.GetClient()
-	targetDir := a.Task.GetCoreTask().Dirs.TargetDir
+	targetDir := a.Task.GetJob().TargetDirPath
 	preRequiredFiles := []string{"Dockerfile"}
 
 	// Mounting dir.

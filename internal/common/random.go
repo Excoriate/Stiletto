@@ -12,6 +12,21 @@ const (
 	specialChars     = "!@#$%^&*()-_=+[]{}|;:,.<>?/"
 )
 
+func GenerateRandomString(limit int, lower bool) string {
+	rand.NewSource(time.Now().UnixNano())
+	builder := strings.Builder{}
+	for i := 0; i < limit; i++ {
+		randomIndex := rand.Intn(len(uppercaseLetters))
+		builder.WriteByte(uppercaseLetters[randomIndex])
+	}
+
+	if lower {
+		return strings.ToLower(builder.String())
+	}
+
+	return builder.String()
+}
+
 func GenerateRandomStringWithPrefix(limit int, upper, lower, withSpecialChars bool, prefix string) string {
 	var characters string
 

@@ -16,6 +16,7 @@ var (
 	ecrRegistryName   string
 	imageTag          string
 	dockerFileName    string
+	generateRandomTag bool
 )
 
 var ECRCmd = &cobra.Command{
@@ -27,7 +28,6 @@ Registry`,
   # Push an image into ECR:
   stiletto aws ecr --task=push`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		msg := tui.NewTUIMessage()
 		ux := tui.TUITitle{}
 
@@ -72,12 +72,14 @@ Registry`,
 func addECRCmdFlags() {
 	ECRCmd.Flags().StringVarP(&ecrRepositoryName, "ecr-repository", "", "",
 		"The name of the ECR repository")
-	ECRCmd.Flags().StringVarP(&imageTag, "tag", "", "latest",
+	ECRCmd.Flags().StringVarP(&imageTag, "tag", "", "",
 		"The tag of the image to be pushed. If not specified, it will default to 'latest'")
 	ECRCmd.Flags().StringVarP(&dockerFileName, "dockerfile", "", "",
 		"The name of the Dockerfile. If not specified, it will default to 'Dockerfile'")
 	ECRCmd.Flags().StringVarP(&ecrRegistryName, "ecr-registry", "", "",
 		"The name of the ECR registry.")
+	ECRCmd.Flags().BoolVarP(&generateRandomTag, "generate-random-tag", "", false,
+		"Generate a random tag for the image to be pushed. If specified, the tag flag will be ignored.")
 
 	err := ECRCmd.MarkFlagRequired("ecr-repository")
 	if err != nil {
@@ -92,6 +94,7 @@ func addECRCmdFlags() {
 	_ = viper.BindPFlag("ecr-repository", ECRCmd.Flags().Lookup("ecr-repository"))
 	_ = viper.BindPFlag("ecr-registry", ECRCmd.Flags().Lookup("ecr-registry"))
 	_ = viper.BindPFlag("tag", ECRCmd.Flags().Lookup("tag"))
+	_ = viper.BindPFlag("generate-random-tag", ECRCmd.Flags().Lookup("generate-random-tag"))
 	_ = viper.BindPFlag("dockerfile", ECRCmd.Flags().Lookup("dockerfile"))
 }
 

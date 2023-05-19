@@ -48,11 +48,12 @@ func New(cliArgs *config.CLIGlobalArgs, stack, jobName string) (*pipeline.Config
 		MountDir:  p.PipelineOpts.MountDir,
 
 		// Environmental configuration
-		ScanAWSEnvVars:       cliArgs.ScanAWSKeys,
-		ScanTerraformEnvVars: cliArgs.ScanTerraformVars,
-		EnvVarsToSet:         cliArgs.EnvKeyValuePairsToSetString,
-		EnvVarsToScan:        cliArgs.ScanEnvVarKeys,
-		DotEnvFile:           cliArgs.DotEnvFile,
+		ScanAWSEnvVars:            cliArgs.ScanAWSKeys,
+		ScanTerraformEnvVars:      cliArgs.ScanTerraformVars,
+		ScanEnvVarsFromDotEnvFile: cliArgs.DotEnvFile != "",
+		EnvVarsToSet:              cliArgs.EnvKeyValuePairsToSetString,
+		EnvVarsToScan:             cliArgs.ScanEnvVarKeys,
+		DotEnvFile:                cliArgs.DotEnvFile,
 	})
 
 	if jobErr != nil {

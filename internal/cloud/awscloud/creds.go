@@ -13,10 +13,12 @@ type AWSCredentials struct {
 
 func GetAWSRegionSet() (string, error) {
 	cfg := config.Cfg{}
-	awsRegion, viperErr := cfg.GetFromViper("aws-region")
+	awsRegion, viperErr := cfg.GetFromViper("aws-creds-region")
 	awsRegionEnvVars, envVarErr := cfg.GetFromEnvVars("AWS_REGION")
+	awsDefaultRegionEnvVar, awsDefaultRegionEnvVarErr := cfg.GetFromEnvVars("AWS_DEFAULT_REGION")
 
-	if viperErr != nil && envVarErr != nil {
+	//if viperErr != nil && envVarErr != nil {
+	if viperErr != nil && envVarErr != nil && awsDefaultRegionEnvVarErr != nil {
 		return "", errors.NewAWSCfgError("AWS_REGION is not set ("+
 			"check the flags passed or exported env vars)", nil)
 	}
@@ -25,12 +27,20 @@ func GetAWSRegionSet() (string, error) {
 		return awsRegion.Value.(string), nil
 	}
 
+	if envVarErr == nil {
+		return awsRegionEnvVars.Value.(string), nil
+	}
+
+	if awsDefaultRegionEnvVarErr == nil {
+		return awsDefaultRegionEnvVar.Value.(string), nil
+	}
+
 	return awsRegionEnvVars.Value.(string), nil
 }
 
 func GetAWSAccessKeyID() (string, error) {
 	cfg := config.Cfg{}
-	awsAccessKeyID, viperErr := cfg.GetFromViper("aws-access-key-id")
+	awsAccessKeyID, viperErr := cfg.GetFromViper("aws-creds-access-key-id")
 	awsAccessKeyIDEnvVars, envVarErr := cfg.GetFromEnvVars("AWS_ACCESS_KEY_ID")
 
 	if viperErr != nil && envVarErr != nil {
@@ -48,7 +58,7 @@ func GetAWSAccessKeyID() (string, error) {
 
 func GetAWSSecretAccessKey() (string, error) {
 	cfg := config.Cfg{}
-	secretAccessKey, viperErr := cfg.GetFromViper("aws-secret-access-key")
+	secretAccessKey, viperErr := cfg.GetFromViper("aws-creds-secret-access-key")
 	secretAccessKeyEnvVars, envVarErr := cfg.GetFromEnvVars("AWS_SECRET_ACCESS_KEY")
 
 	if viperErr != nil && envVarErr != nil {

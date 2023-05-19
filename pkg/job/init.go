@@ -90,13 +90,15 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 	}
 
 	// 11. MountDir in dagger format.
-	mountDir, err := i.BuildMountDir(c, new.MountDir)
+	mountDirPath := p.PipelineOpts.MountDirPath
+	mountDir, err := i.BuildMountDir(c, mountDirPath)
 	if err != nil {
 		return nil, err
 	}
 
 	// 12. Target dir in dagger format.
-	targetDir, err := i.BuildTargetDir(c, new.TargetDir)
+	targetDirPath := p.PipelineOpts.TargetDirPath
+	targetDir, err := i.BuildTargetDir(c, targetDirPath)
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +142,8 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		// Paths
 		RootDirPath:   ".",
 		WorkDirPath:   new.WorkDir,
-		MountDirPath:  new.MountDir,
-		TargetDirPath: new.TargetDir,
+		MountDirPath:  p.PipelineOpts.MountDirPath,
+		TargetDirPath: p.PipelineOpts.TargetDirPath,
 
 		Ctx: new.PipelineCfg.Ctx,
 	}, nil
@@ -289,16 +291,21 @@ func (i *Instance) ScanEnvVarsCustom(scanCustomVars []string) (map[string]string
 func (i *Instance) ScanEnvVarsFromDotEnvFile(dotEnvFile string) (map[string]string, error) {
 	ux := i.InitOptions.PipelineCfg.UXMessage
 
-	envVars, err := filesystem.GetEnvVarsFromDotFile(dotEnvFile)
-	if err != nil {
-		errMsg := GetErrMsg(i.JobName, i.JobId,
-			"Failed to scan env vars from .env file", nil)
-		return nil, errors.NewDaggerEngineError(errMsg, err)
+	if i.InitOptions.ScanEnvVarsFromDotEnvFile {
+		envVars, err := filesystem.GetEnvVarsFromDotFile(dotEnvFile)
+		if err != nil {
+			errMsg := GetErrMsg(i.JobName, i.JobId,
+				"Failed to scan env vars from .env file", nil)
+			return nil, errors.NewDaggerEngineError(errMsg, err)
+		}
+
+		ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Env vars scanned successfully from .env file"))
+
+		return envVars, nil
 	}
 
-	ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Env vars scanned successfully from .env file"))
-
-	return envVars, nil
+	ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Skipping env var scan from .env file"))
+	return map[string]string{}, nil
 }
 
 // ValidatedEnvVarsPassed 7. Validate environment variables to be set.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 func DirExist(dir string) error {
@@ -61,6 +62,14 @@ func DirIsValid(dir string) error {
 	return nil
 }
 
+func IsPathAbsolute(path string) error {
+	if !filepath.IsAbs(path) {
+		return fmt.Errorf("path %s is not absolute", path)
+	}
+
+	return nil
+}
+
 func IsSubDir(parentDir string, childDir string) error {
 	if err := DirExist(parentDir); err != nil {
 		return err
@@ -70,24 +79,33 @@ func IsSubDir(parentDir string, childDir string) error {
 		return err
 	}
 
-	if err := DirExist(childDir); err != nil {
+	// If the child dir isn't passed absolute, make it so.
+	var childDirAbs string
+	if err := IsPathAbsolute(childDir); err != nil {
+		childDirFull := filepath.Join(filepath.Clean(parentDir), filepath.Clean(childDir))
+		childDirAbs, err = PathToAbsolute(childDirFull)
+		if err != nil {
+			return err
+		}
+	} else {
+		childDirAbs = filepath.Clean(childDir)
+	}
+
+	if err := DirExist(childDirAbs); err != nil {
 		return err
 	}
 
-	if err := PathIsADirectory(childDir); err != nil {
+	if err := PathIsADirectory(childDirAbs); err != nil {
 		return err
 	}
 
-	parentDir = filepath.Clean(parentDir)
-	childDir = filepath.Clean(childDir)
-
-	relativePath, err := filepath.Rel(parentDir, childDir)
+	relativePath, err := filepath.Rel(parentDir, childDirAbs)
 	if err != nil {
-		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDir, parentDir)
+		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDirAbs, parentDir)
 	}
 
-	if filepath.HasPrefix(relativePath, "..") {
-		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDir, parentDir)
+	if strings.HasPrefix(relativePath, "..") {
+		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDirAbs, parentDir)
 	}
 
 	return nil

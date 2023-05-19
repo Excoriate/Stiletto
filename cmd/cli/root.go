@@ -176,7 +176,6 @@ func initConfig() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	addPersistentFlags()
 
 	rootCmd.AddCommand(docker.Cmd)
 	rootCmd.AddCommand(aws.Cmd)
@@ -184,4 +183,6 @@ func init() {
 
 	_ = rootCmd.MarkFlagRequired("task")
 	_ = rootCmd.MarkFlagRequired("workdir")
+
+	addPersistentFlags()
 }

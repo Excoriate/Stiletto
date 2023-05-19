@@ -6,9 +6,9 @@ import (
 )
 
 var (
-	AWSAccessKeyID string
-	AWSSecretKey   string
-	AWSRegion      string
+	AccessKeyID string
+	SecretKey   string
+	Region      string
 )
 
 var Cmd = &cobra.Command{
@@ -26,28 +26,29 @@ You can specify the tasks you want to perform using the provided --task flag.`,
 }
 
 func addFlags() {
-	Cmd.PersistentFlags().StringVarP(&AWSAccessKeyID,
-		"aws-access-key-id",
+	Cmd.PersistentFlags().StringVarP(&AccessKeyID,
+		"aws-creds-access-key-id",
 		"i", "",
 		"The AWS Access Key ID. If it's not set, it'll be read from the AWS_ACCESS_KEY_ID environment variable.")
 
-	Cmd.PersistentFlags().StringVarP(&AWSSecretKey,
-		"aws-secret-key",
+	Cmd.PersistentFlags().StringVarP(&SecretKey,
+		"aws-creds-secret-key",
 		"k", "",
 		"The AWS Secret Access Key. If it's not set, it'll be read from the AWS_SECRET_ACCESS_KEY environment variable.")
 
-	Cmd.PersistentFlags().StringVarP(&AWSRegion,
-		"aws-region",
-		"", "",
-		"The AWS Region. If it's not set, it'll be read from the AWS_REGION environment variable.")
+	Cmd.PersistentFlags().StringVarP(&Region,
+		"aws-creds-region",
+		"r", "",
+		"The AWS Region. If it's not set, "+
+			"it'll be read from the AWS_REGION and for the AWS_DEFAULT_REGION environment variable.")
 
-	_ = viper.BindPFlag("aws-access-key-id", Cmd.PersistentFlags().Lookup("aws-access-key-id"))
-	_ = viper.BindPFlag("aws-secret-access-key", Cmd.PersistentFlags().Lookup("aws-secret-key"))
-	_ = viper.BindPFlag("aws-region", Cmd.PersistentFlags().Lookup("aws-region"))
+	_ = viper.BindPFlag("aws-creds-access-key-id", Cmd.PersistentFlags().Lookup("aws-creds-access-key-id"))
+	_ = viper.BindPFlag("aws-creds-secret-key", Cmd.PersistentFlags().Lookup("aws-creds-secret-key"))
+	_ = viper.BindPFlag("aws-creds-region", Cmd.PersistentFlags().Lookup("aws-creds-region"))
 }
 
 func init() {
+	addFlags()
 	Cmd.AddCommand(ECRCmd)
 	Cmd.AddCommand(ECSCmd)
-	addFlags()
 }

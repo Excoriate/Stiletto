@@ -17,11 +17,12 @@ type InitOptions struct {
 	TargetDir string
 
 	// Scanned Environment variables to resolve, and set.
-	ScanAWSEnvVars       bool
-	ScanTerraformEnvVars bool
-	EnvVarsToSet         map[string]string
-	EnvVarsToScan        []string
-	DotEnvFile           string
+	ScanAWSEnvVars            bool
+	ScanTerraformEnvVars      bool
+	EnvVarsToSet              map[string]string
+	EnvVarsToScan             []string
+	ScanEnvVarsFromDotEnvFile bool
+	DotEnvFile                string
 }
 
 type Job struct {

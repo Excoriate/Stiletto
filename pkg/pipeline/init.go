@@ -10,6 +10,7 @@ import (
 	"github.com/Excoriate/stiletto/internal/logger"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/Excoriate/stiletto/pkg/config"
+	"path/filepath"
 )
 
 func isWorkDirValid(pLog logger.Logger, workDir string) error {
@@ -42,12 +43,21 @@ func isMountDirValid(mountDir string, workDir string) error {
 		return nil // it's not passed, it's fine. It'll be set to the working directory
 	}
 
-	if _, err := filesystem.PathExist(mountDirNormalised); err != nil {
+	mountDirComplete := filepath.Join(workDir, mountDirNormalised)
+	moundDirAbsolute, err := filesystem.PathToAbsolute(mountDirComplete)
+
+	if err != nil {
+		errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
+			"invalid mount directory: %s. Cant convert it to an absolute path", mountDirNormalised)
+		return errors.NewPipelineConfigurationError(errMsg, err)
+	}
+
+	if _, err := filesystem.PathExist(moundDirAbsolute); err != nil {
 		errMsg := fmt.Sprintf("PipelineCfg cant initialise, invalid mount directory: %s. It does not exist", mountDirNormalised)
 		return errors.NewPipelineConfigurationError(errMsg, err)
 	}
 
-	if err := filesystem.PathIsADirectory(mountDirNormalised); err != nil {
+	if err := filesystem.PathIsADirectory(moundDirAbsolute); err != nil {
 		errMsg := fmt.Sprintf("PipelineCfg cant initialise, invalid mount directory: %s it is not a directory", mountDirNormalised)
 		return errors.NewPipelineConfigurationError(errMsg, err)
 	}
@@ -196,7 +206,8 @@ func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error 
 		args.MountDir = "."
 	}
 
-	args.MountDirPath, _ = filesystem.PathToAbsolute(args.MountDir)
+	mountDirPath := filepath.Join(args.WorkDirPath, args.MountDir)
+	args.MountDirPath, _ = filesystem.PathToAbsolute(mountDirPath)
 
 	// 3. Validate the target directory.
 	if err := isTargetDirValid(args.TargetDir, args.MountDir, args.WorkDir); err != nil {
@@ -206,9 +217,11 @@ func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error 
 
 	if args.TargetDir == "" {
 		args.TargetDir = args.MountDir
+		args.TargetDirPath = args.MountDirPath
+	} else {
+		targetDirPath := filepath.Join(args.WorkDirPath, args.TargetDir)
+		args.TargetDirPath, _ = filesystem.PathToAbsolute(targetDirPath)
 	}
-
-	args.TargetDirPath, _ = filesystem.PathToAbsolute(args.TargetDir)
 
 	if err := isTaskNameValid(args.TaskName); err != nil {
 		ux.ShowError("VALIDATION", "Preconditions failed", err)
