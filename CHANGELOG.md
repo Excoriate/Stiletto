@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/Excoriate/Stiletto/compare/v0.2.4...v0.2.5) (2023-05-19)
+
+
+### Bug Fixes
+
+* resolve workdir in a smart manner, based on key dot or current dir ([6386662](https://github.com/Excoriate/Stiletto/commit/6386662bb59ee42e42857568d10b4f31abbb798b))
+
 ## [0.2.4](https://github.com/Excoriate/Stiletto/compare/v0.2.3...v0.2.4) (2023-05-19)
 
 
