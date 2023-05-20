@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/Excoriate/Stiletto/compare/v0.2.5...v0.2.6) (2023-05-20)
+
+
+### Features
+
+* add support for env vars in ecs deploy command ([cd73e6c](https://github.com/Excoriate/Stiletto/commit/cd73e6c031c497d31656c3d3d5952cd606c6fd09))
+
 ## [0.2.5](https://github.com/Excoriate/Stiletto/compare/v0.2.4...v0.2.5) (2023-05-19)
 
 
