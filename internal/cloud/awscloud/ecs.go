@@ -6,11 +6,18 @@ import (
 	"github.com/Excoriate/stiletto/internal/common"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ecs"
+	"github.com/aws/aws-sdk-go-v2/service/ecs/types"
 )
 
 type ECSTaskDefContainerDefUpdateOptions struct {
-	ImageURL string
-	Version  string
+	ImageURL             string
+	Version              string
+	EnvironmentVariables map[string]string
+}
+
+type ECSTaskDefEnvVars struct {
+	Key   string
+	Value string
 }
 
 type ECSUpdateServiceOptions struct {
@@ -47,6 +54,20 @@ func UpdateECSTaskContainerDefinition(client *ecs.Client,
 
 	for i := range taskDef.TaskDefinition.ContainerDefinitions {
 		taskDef.TaskDefinition.ContainerDefinitions[i].Image = &imageURL
+	}
+
+	// Update environment variables.
+	if len(opt.EnvironmentVariables) > 0 {
+		for i := range taskDef.TaskDefinition.ContainerDefinitions {
+			for k, v := range opt.EnvironmentVariables {
+				taskDef.TaskDefinition.ContainerDefinitions[i].Environment = append(
+					taskDef.TaskDefinition.ContainerDefinitions[i].Environment,
+					types.KeyValuePair{
+						Name:  aws.String(k),
+						Value: aws.String(v),
+					})
+			}
+		}
 	}
 
 	newTaskDefInput := &ecs.RegisterTaskDefinitionInput{

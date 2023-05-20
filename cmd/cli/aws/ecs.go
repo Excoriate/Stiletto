@@ -14,9 +14,14 @@ import (
 var (
 	ecsService     string
 	ecsCluster     string
-	taskDefinition string // Map to the task definition family name.
+	taskDefinition string
 	imageURL       string
-	releaseVersion string
+	version        string
+	// These particular options set the env vars to the container definition during deployment time.
+	setEnvFromHost       bool
+	setEnvFromKeys       []string
+	setEnvVarsWithPrefix string
+	setEnvVarsCustom     map[string]string
 )
 
 var ECSCmd = &cobra.Command{
@@ -83,9 +88,21 @@ func addECSCmdFlags() {
 	ECSCmd.Flags().StringVarP(&imageURL, "image-url", "", "",
 		"The URL of the image to be deployed.")
 
-	ECSCmd.Flags().StringVarP(&releaseVersion, "release-version", "", "",
+	ECSCmd.Flags().StringVarP(&version, "release-version", "", "",
 		"The tag or version of the (container) image to be deployed. If not specified, "+
 			"the default value is 'latest'.")
+
+	ECSCmd.Flags().BoolVarP(&setEnvFromHost, "set-env-from-host", "", false,
+		"Set environment variables from host environment variables.")
+
+	ECSCmd.Flags().StringSliceVarP(&setEnvFromKeys, "set-env-from-keys", "", []string{},
+		"Set environment variables from host environment variables.")
+
+	ECSCmd.Flags().StringVarP(&setEnvVarsWithPrefix, "set-env-vars-with-prefix", "", "",
+		"Set environment variables from host environment variables.")
+
+	ECSCmd.Flags().StringToStringVarP(&setEnvVarsCustom, "set-env-vars-custom", "", map[string]string{},
+		"Set environment variables from host environment variables.")
 
 	err := ECSCmd.MarkFlagRequired("ecs-service")
 	if err != nil {
@@ -107,6 +124,10 @@ func addECSCmdFlags() {
 	_ = viper.BindPFlag("task-definition", ECSCmd.Flags().Lookup("task-definition"))
 	_ = viper.BindPFlag("image-url", ECSCmd.Flags().Lookup("image-url"))
 	_ = viper.BindPFlag("release-version", ECSCmd.Flags().Lookup("release-version"))
+	_ = viper.BindPFlag("set-env-from-host", ECSCmd.Flags().Lookup("set-env-from-host"))
+	_ = viper.BindPFlag("set-env-from-keys", ECSCmd.Flags().Lookup("set-env-from-keys"))
+	_ = viper.BindPFlag("set-env-vars-with-prefix", ECSCmd.Flags().Lookup("set-env-vars-with-prefix"))
+	_ = viper.BindPFlag("set-env-vars-custom", ECSCmd.Flags().Lookup("set-env-vars-custom"))
 }
 
 func init() {

@@ -71,41 +71,48 @@ func IsPathAbsolute(path string) error {
 }
 
 func IsSubDir(parentDir string, childDir string) error {
-	if err := DirExist(parentDir); err != nil {
+	parentDir = filepath.Clean(parentDir)
+	childDir = filepath.Clean(childDir)
+
+	// If the parentDir and childDir aren't passed absolute, make them so.
+	parentDirAbs, err := filepath.Abs(parentDir)
+	if err != nil {
 		return err
 	}
 
-	if err := PathIsADirectory(parentDir); err != nil {
-		return err
-	}
-
-	// If the child dir isn't passed absolute, make it so.
 	var childDirAbs string
-	if err := IsPathAbsolute(childDir); err != nil {
-		childDirFull := filepath.Join(filepath.Clean(parentDir), filepath.Clean(childDir))
-		childDirAbs, err = PathToAbsolute(childDirFull)
+	if filepath.IsAbs(childDir) {
+		childDirAbs = childDir
+	} else {
+		childDir = filepath.Join(parentDirAbs, childDir)
+		childDirAbs, err = filepath.Abs(childDir)
 		if err != nil {
 			return err
 		}
-	} else {
-		childDirAbs = filepath.Clean(childDir)
 	}
 
+	// Check if parentDir and childDir exists and are directories
+	if err := DirExist(parentDirAbs); err != nil {
+		return err
+	}
+	if err := PathIsADirectory(parentDirAbs); err != nil {
+		return err
+	}
 	if err := DirExist(childDirAbs); err != nil {
 		return err
 	}
-
 	if err := PathIsADirectory(childDirAbs); err != nil {
 		return err
 	}
 
-	relativePath, err := filepath.Rel(parentDir, childDirAbs)
+	// Check if childDirAbs is a subdirectory of parentDirAbs
+	relativePath, err := filepath.Rel(parentDirAbs, childDirAbs)
 	if err != nil {
-		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDirAbs, parentDir)
+		return err
 	}
 
-	if strings.HasPrefix(relativePath, "..") {
-		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDirAbs, parentDir)
+	if strings.HasPrefix(relativePath, "..") || relativePath == "." || strings.HasPrefix(relativePath, "/") {
+		return fmt.Errorf("the child directory %s is not a subdirectory of %s", childDirAbs, parentDirAbs)
 	}
 
 	return nil

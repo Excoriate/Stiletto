@@ -92,7 +92,7 @@ func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
 			"Failed to get config value (from viper) for key: %s. It is not found.", keyNormalised))
 	}
 
-	if common.IsNotNilAndNotEmpty(value.(string)) {
+	if common.IsNotNilAndNotEmpty(value) {
 		return CfgValue{Key: keyNormalised, Value: value}, nil
 	}
 

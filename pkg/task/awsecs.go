@@ -27,7 +27,7 @@ func RunTaskAWSECS(opt InitOptions) error {
 		a := NewAWSECSAction(t, actionPrefix)
 
 		// Run the action
-		_, err := a.DeployNewTask()
+		_, err := a.DeployTask()
 		if err != nil {
 			return err
 		}

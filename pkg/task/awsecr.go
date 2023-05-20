@@ -27,7 +27,7 @@ func RunTaskAWSECR(opt InitOptions) error {
 		a := NewAWSECRAction(t, actionPrefix)
 
 		// Run the action
-		_, err := a.DeployNewTask()
+		_, err := a.Push()
 		if err != nil {
 			return err
 		}

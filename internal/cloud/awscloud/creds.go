@@ -76,17 +76,18 @@ func GetAWSSecretAccessKey() (string, error) {
 func GetCredentials() (AWSCredentials, error) {
 	awsRegion, err := GetAWSRegionSet()
 	if err != nil {
-		return AWSCredentials{}, err
+		return AWSCredentials{}, errors.NewTaskConfigurationError(
+			"Failed to obtain AWS credentials.", err)
 	}
 
 	awsAccessKeyID, err := GetAWSAccessKeyID()
 	if err != nil {
-		return AWSCredentials{}, err
+		return AWSCredentials{}, errors.NewTaskConfigurationError("Failed to obtain AWS credentials.", err)
 	}
 
 	awsSecretAccessKey, err := GetAWSSecretAccessKey()
 	if err != nil {
-		return AWSCredentials{}, err
+		return AWSCredentials{}, errors.NewTaskConfigurationError("Failed to obtain AWS credentials.", err)
 	}
 
 	return AWSCredentials{

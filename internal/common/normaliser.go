@@ -19,8 +19,20 @@ func IsNotNilAndNotEmpty(target interface{}) bool {
 		return false
 	}
 
-	targetNormalised := NormaliseNoSpaces(target.(string))
-	return targetNormalised != ""
+	switch value := target.(type) {
+	case string:
+		return value != ""
+	case bool:
+		return true
+	case int:
+		return value != 0
+	case []interface{}:
+		return len(value) > 0
+	case map[string]interface{}:
+		return len(value) > 0
+	default:
+		return false
+	}
 }
 
 func RemoveDoubleQuotes(target string) string {

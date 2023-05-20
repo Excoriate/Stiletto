@@ -37,7 +37,7 @@ type AWSECRPushActionArgs struct {
 }
 
 type AWSECRPushActions interface {
-	DeployNewTask() (Output, error)
+	Push() (Output, error)
 }
 
 func getBuildTagAndPushActionArgs(uxLog tui.TUIMessenger) (AWSECRPushActionArgs, error) {
@@ -125,7 +125,7 @@ func getBuildTagAndPushActionArgs(uxLog tui.TUIMessenger) (AWSECRPushActionArgs,
 	}, nil
 }
 
-func (a *AWSECRPushAction) DeployNewTask() (Output, error) {
+func (a *AWSECRPushAction) Push() (Output, error) {
 	// Getting all the requirements.
 	uxLog := a.Task.GetPipelineUXLog()
 	opts, err := getBuildTagAndPushActionArgs(uxLog)

@@ -20,3 +20,8 @@ type PipelineOptions struct {
 	IsEnvVarsToScanFromDotEnvFile  bool
 	InitDaggerWithWorkDirByDefault bool
 }
+
+type PipelineDirs struct {
+	Dir  string
+	Path string
+}

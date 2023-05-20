@@ -7,6 +7,7 @@ import (
 	"github.com/Excoriate/stiletto/internal/cloud/awscloud"
 	"github.com/Excoriate/stiletto/internal/common"
 	"github.com/Excoriate/stiletto/internal/errors"
+	"github.com/Excoriate/stiletto/internal/filesystem"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/Excoriate/stiletto/pkg/config"
 )
@@ -35,21 +36,22 @@ type AWSECSDeployActionArgs struct {
 	TaskDefinition           string
 	ImageTagOrReleaseVersion string
 	Image                    string
+
+	EnvVarsToSetInContainerDef map[string]string
 }
 
 type AWSECSDeployActions interface {
-	DeployNewTask() (Output, error)
+	DeployTask() (Output, error)
 }
 
-func getDeployActionArgs(uxLog tui.TUIMessenger) (AWSECSDeployActionArgs, error) {
+func getDeployActionArgs(log tui.TUIMessenger) (AWSECSDeployActionArgs, error) {
 	awsCredentialsCfg, err := awscloud.GetCredentials()
 	actionPrefix := "AWS:ECS:DEPLOY"
 
 	if err != nil {
-		errMsg := fmt.Sprintf("Failed to get 'ecsDeployAction' arguments, " +
-			"AWS credentials could not be met")
-		uxLog.ShowError(actionPrefix, errMsg, err)
-		return AWSECSDeployActionArgs{}, errors.NewActionCfgError(errMsg, err)
+		msg := "Failed to execute ECS action. Pre-requirements could not be satisfied"
+		log.ShowError(actionPrefix, msg, err)
+		return AWSECSDeployActionArgs{}, errors.NewActionCfgError(msg, err)
 	}
 
 	cfg := config.Cfg{}
@@ -58,53 +60,151 @@ func getDeployActionArgs(uxLog tui.TUIMessenger) (AWSECSDeployActionArgs, error)
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to get 'ecsDeployAction' arguments, " +
 			"'ecs-service' could not be met")
-		uxLog.ShowError(actionPrefix, errMsg, err)
+		log.ShowError(actionPrefix, errMsg, err)
 		return AWSECSDeployActionArgs{}, errors.NewActionCfgError(errMsg, err)
 	}
 
 	ecsCluster, err := cfg.GetFromAny("ecs-cluster")
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to get 'ecsDeployAction' arguments, " +
-			"'ecs-cluster' could not be met")
-		uxLog.ShowError(actionPrefix, errMsg, err)
+			"'ecs-service' could not be met")
+		log.ShowError(actionPrefix, errMsg, err)
 		return AWSECSDeployActionArgs{}, errors.NewActionCfgError(errMsg, err)
 	}
 
 	ecsTaskDefName, err := cfg.GetFromAny("task-definition")
 	if err != nil {
 		errMsg := fmt.Sprintf("Failed to get 'ecsDeployAction' arguments, " +
-			"'task-definition' could not be met")
-		uxLog.ShowError(actionPrefix, errMsg, err)
+			"'ecs-service' could not be met")
+		log.ShowError(actionPrefix, errMsg, err)
 		return AWSECSDeployActionArgs{}, errors.NewActionCfgError(errMsg, err)
 	}
 
 	imageUrl, err := cfg.GetFromAny("image-url")
 	if err != nil {
-		uxLog.ShowWarning(actionPrefix, "No 'image-url' found, "+
+		log.ShowWarning(actionPrefix, "No 'image-url' found, "+
 			"using 'container-image' field that's set in the task definition as the default value")
 		imageUrl.Value = "use-task-def"
 	}
 
 	tag, err := cfg.GetFromAny("release-version")
 	if err != nil {
-		uxLog.ShowWarning(actionPrefix, "No 'image-tag' found, the value 'latest' will be used")
+		log.ShowWarning(actionPrefix, "No 'image-tag' found, the value 'latest' will be used")
 		tag.Value = "latest"
 	}
 
+	// Env specific options.
+	var contDefVarsTotal map[string]string
+	// Allowed scan/set options to update the task definition/container def.
+	//with environment variables.
+	var contDefEnvVarsScannedFromHost map[string]string
+	var contDefEnvVarsScannedFromKeys map[string]string
+	var contDefEnvVarsSetCustom map[string]string
+	var contDefEnvVarScannedByPrefix map[string]string
+
+	// 1. Scan from host.
+	envVarsScanFromHostCfg, err := cfg.GetFromAny("set-env-from-host")
+	if err != nil {
+		log.ShowInfo(actionPrefix, "No 'set-env-from-host' found, "+
+			"no environment variables will be scanned from host")
+	} else {
+		isEnvVarsScanFromHostEnabled := envVarsScanFromHostCfg.Value.(bool)
+		if isEnvVarsScanFromHostEnabled {
+			log.ShowWarning(actionPrefix, "The 'set-env-from-host' is set. "+
+				"All the host environment variables will be scanned and set in the task definition/container def.")
+
+			contDefEnvVarsScannedFromHost, err = filesystem.FetchAllEnvVarsFromHost()
+			if err != nil {
+				log.ShowError(actionPrefix, "Failed to scan the host environment variables", err)
+				return AWSECSDeployActionArgs{}, errors.NewActionCfgError("Failed to scan the host environment variables", err)
+			}
+		} else {
+			log.ShowInfo(actionPrefix, "The option 'set-env-from-host' is disabled, "+
+				"no environment variables will be scanned from host")
+		}
+	}
+
+	// 2. Scan from specific keys passed.
+	envVarsScanFromKeysCfg, err := cfg.GetFromViper("set-env-from-keys")
+	if err != nil {
+		log.ShowInfo(actionPrefix, "No 'set-env-from-keys' found, "+
+			"no environment variables will be scanned from keys")
+	} else {
+		keysToScan := envVarsScanFromKeysCfg.Value.([]string)
+		if len(keysToScan) == 0 {
+			log.ShowInfo(actionPrefix, "The option 'set-env-from-keys' is set, "+
+				"however no keys were passed, no environment variables will be scanned from keys")
+		} else {
+			scannedFromKeys, err := filesystem.FetchEnvVarsAsMap(keysToScan, []string{})
+			if err != nil {
+				log.ShowError(actionPrefix, "Failed to scan the environment variables from keys", err)
+				return AWSECSDeployActionArgs{}, errors.NewActionCfgError("Failed to scan the environment variables from keys", err)
+			}
+
+			contDefEnvVarsScannedFromKeys = scannedFromKeys
+		}
+	}
+
+	// 3. Scan from prefix.
+	envVarsScanFromPrefixCfg, err := cfg.GetFromViper("set-env-vars-with-prefix")
+	if err != nil {
+		log.ShowInfo(actionPrefix, "The option 'set-env-vars-with-prefix' is not set, no environment variables will be scanned from prefix")
+	} else {
+		prefix := envVarsScanFromPrefixCfg.Value.(string)
+		prefix = common.NormaliseNoSpaces(prefix)
+
+		if prefix == "" {
+			log.ShowError(actionPrefix, "The option 'set-env-vars-with-prefix' is set, "+
+				"however the prefix is empty", nil)
+			return AWSECSDeployActionArgs{}, errors.NewActionCfgError("The option 'set-env-from-prefix' is set, however the prefix is empty", err)
+		}
+
+		log.ShowInfo(actionPrefix, fmt.Sprintf("Scanning the environment variables with the prefix '%s'", prefix))
+		scannedEnvVarsWithPrefix, err := filesystem.FetchEnvVarsWithPrefix(prefix)
+		if err != nil {
+			log.ShowError(actionPrefix, "Failed to scan the environment variables with the prefix", err)
+			return AWSECSDeployActionArgs{}, errors.NewActionCfgError("Failed to scan the environment variables with the prefix", err)
+		}
+
+		contDefEnvVarScannedByPrefix = scannedEnvVarsWithPrefix
+	}
+
+	// 4. Set custom and directly passed environment variables
+	envVarsSetCustomCfg, err := cfg.GetFromViper("set-env-vars-custom")
+	if err != nil {
+		log.ShowInfo(actionPrefix, "No 'set-env-vars-custom' found, so no custom environment variables will be set")
+	} else {
+		envVarsSetCustom := envVarsSetCustomCfg.Value.(map[string]string)
+		if len(envVarsSetCustom) == 0 {
+			log.ShowInfo(actionPrefix, "The option 'set-env-vars-custom' is set, "+
+				"however no custom environment variables were passed, no environment variables will be set")
+		} else {
+			for k, v := range envVarsSetCustom {
+				log.ShowInfo(actionPrefix, fmt.Sprintf("Setting the custom environment variable '%s' with the value '%s'", k, v))
+			}
+
+			contDefEnvVarsSetCustom = envVarsSetCustom
+		}
+	}
+
+	contDefVarsTotal = filesystem.MergeEnvVars(contDefEnvVarsScannedFromHost,
+		contDefEnvVarsScannedFromKeys, contDefEnvVarScannedByPrefix, contDefEnvVarsSetCustom)
+
 	return AWSECSDeployActionArgs{
-		AWSRegion:                awsCredentialsCfg.Region,
-		AWSAccessKey:             awsCredentialsCfg.AccessKeyID,
-		AWSSecretKey:             awsCredentialsCfg.SecretAccessKey,
-		ClusterName:              ecsCluster.Value.(string),
-		ServiceName:              ecsService.Value.(string),
-		TaskDefinition:           ecsTaskDefName.Value.(string),
-		ImageTagOrReleaseVersion: tag.Value.(string),
-		Image:                    imageUrl.Value.(string),
+		AWSRegion:                  awsCredentialsCfg.Region,
+		AWSAccessKey:               awsCredentialsCfg.AccessKeyID,
+		AWSSecretKey:               awsCredentialsCfg.SecretAccessKey,
+		ClusterName:                ecsCluster.Value.(string),
+		ServiceName:                ecsService.Value.(string),
+		TaskDefinition:             ecsTaskDefName.Value.(string),
+		ImageTagOrReleaseVersion:   tag.Value.(string),
+		Image:                      imageUrl.Value.(string),
+		EnvVarsToSetInContainerDef: contDefVarsTotal,
 	}, nil
 
 }
 
-func (a *AWSECSDeployAction) DeployNewTask() (Output, error) {
+func (a *AWSECSDeployAction) DeployTask() (Output, error) {
 	// Getting all the requirements.
 	uxLog := a.Task.GetPipelineUXLog()
 	opts, err := getDeployActionArgs(uxLog)
@@ -134,8 +234,9 @@ func (a *AWSECSDeployAction) DeployNewTask() (Output, error) {
 	// Update the task definition.
 	updateTaskARN, err := awscloud.UpdateECSTaskContainerDefinition(ecsClient, taskDef,
 		awscloud.ECSTaskDefContainerDefUpdateOptions{
-			ImageURL: opts.Image,
-			Version:  opts.ImageTagOrReleaseVersion,
+			ImageURL:             opts.Image,
+			Version:              opts.ImageTagOrReleaseVersion,
+			EnvironmentVariables: opts.EnvVarsToSetInContainerDef,
 		})
 
 	if err != nil {
