@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/Excoriate/Stiletto/compare/v0.2.6...v0.2.7) (2023-05-21)
+
+
+### Bug Fixes
+
+* add git repositories validations, add proper validations for terragrunt module target dir ([2cd6962](https://github.com/Excoriate/Stiletto/commit/2cd69625a859fd9e02470c6257846e2e787a8671))
+
 ## [0.2.6](https://github.com/Excoriate/Stiletto/compare/v0.2.5...v0.2.6) (2023-05-20)
 
 
