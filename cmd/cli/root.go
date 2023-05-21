@@ -98,8 +98,8 @@ func addPersistentFlags() {
 	rootCmd.PersistentFlags().BoolVarP(&GlobalScanTFVars,
 		"scan-terraform-vars",
 		"f", false,
-		"Scan terraform exported environment variables and set it into the generated containers ("+
-			"TG_VAR_).")
+		"Scan terraform exported environment variables and set it into the generated containers. "+
+			"The considered 'terraform vars' are those that starts with the prefix TF_VAR_")
 
 	rootCmd.PersistentFlags().BoolVarP(&GlobalScanAllEnvVars,
 		"scan-all-env-vars",

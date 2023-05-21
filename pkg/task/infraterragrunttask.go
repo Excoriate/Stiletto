@@ -10,6 +10,7 @@ import (
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/Excoriate/stiletto/pkg/job"
 	"github.com/Excoriate/stiletto/pkg/pipeline"
+	"path/filepath"
 )
 
 type InfraTerraGruntTask struct {
@@ -64,7 +65,8 @@ func (t *InfraTerraGruntTask) RunCmdInContainer(container *dagger.Container, com
 	return nil
 }
 
-func (t *InfraTerraGruntTask) MountDir(targetDir string, client *dagger.Client, container *dagger.
+func (t *InfraTerraGruntTask) MountDir(workDirPath, targetDir string, client *dagger.Client,
+	container *dagger.
 Container,
 	filesPreRequisites []string, ctx context.Context) (*dagger.Container, error) {
 	ux := tui.NewTUIMessage()
@@ -77,18 +79,33 @@ Container,
 		targetDir = "."
 	}
 
+	if workDirPath == "" {
+		ux.ShowWarning(t.UXPrefix, "An empty directory was passed to be a Working directory ("+
+			"also known as Execution path), "+
+			"hence the default working directory will be used resolved from the '.' value")
+
+		workDirPath = "."
+	}
+
 	if targetDir != "." && len(filesPreRequisites) > 0 {
 		ux.ShowInfo(t.UXPrefix, "The target directory is not the working directory, "+
 			"therefore the files pre-requisites will be verified before mounting the directory")
 
-		if err := daggerio.VerifyFileEntriesInMountedDir(client, targetDir,
+		var targetDirFullPath string
+		if workDirPath != "" && workDirPath != "." {
+			targetDirFullPath = filepath.Join(workDirPath, targetDir)
+		} else {
+			targetDirFullPath = targetDir
+		}
+
+		if err := daggerio.VerifyFileEntriesInMountedDir(client, targetDirFullPath,
 			filesPreRequisites, ctx); err != nil {
 			ux.ShowError(t.UXPrefix, "Failed to mount the directory", err)
 			return nil, err
 		}
 	}
 
-	workDirDagger, err := daggerio.GetDaggerDir(t.GetClient(), ".")
+	workDirDagger, err := daggerio.GetDaggerDir(t.GetClient(), workDirPath)
 
 	if err != nil {
 		ux.ShowError(t.UXPrefix,

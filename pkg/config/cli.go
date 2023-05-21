@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/Excoriate/stiletto/internal/tui"
 	"github.com/spf13/viper"
 )
@@ -28,23 +27,22 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 	defaultEmptyMap := make(map[string]interface{})
 
 	// 'set-env' option
-	keValuePairsFromViper, err := cfg.GetFromViperOrDefault("set-env", defaultEmptyMap)
+	var setEnvValue map[string]interface{}
+	keValuePairsFromViper, err := cfg.GetFromViper("set-env")
 	if err != nil {
-		return CLIGlobalArgs{}, errors.NewArgumentError(
-			"Error trying to parse or resolve argument 'set-env'", err)
+		setEnvValue = defaultEmptyMap
+	} else {
+		setEnvValue = keValuePairsFromViper.Value.(map[string]interface{})
 	}
-
-	setEnvValue := keValuePairsFromViper.Value.(map[string]interface{})
 
 	// 'scan-env' option
-	defaultEmptySliceString := make([]string, 0)
-	scanEnvVarKeysFromViper, err := cfg.GetFromViperOrDefault("scan-env", defaultEmptySliceString)
+	var scanEnvVarKeys []string
+	scanEnvVarKeysFromViper, err := cfg.GetFromViper("scan-env")
 	if err != nil {
-		return CLIGlobalArgs{}, errors.NewArgumentError(
-			"Error trying to parse or resolve argument 'scan-env'", err)
+		scanEnvVarKeys = []string{}
+	} else {
+		scanEnvVarKeys = scanEnvVarKeysFromViper.Value.([]string)
 	}
-
-	scanEnvVarKeys := scanEnvVarKeysFromViper.Value.([]string)
 
 	args := CLIGlobalArgs{
 		WorkingDir:            viper.GetString("work-dir"),

@@ -62,14 +62,6 @@ func DirIsValid(dir string) error {
 	return nil
 }
 
-func IsPathAbsolute(path string) error {
-	if !filepath.IsAbs(path) {
-		return fmt.Errorf("path %s is not absolute", path)
-	}
-
-	return nil
-}
-
 func IsSubDir(parentDir string, childDir string) error {
 	parentDir = filepath.Clean(parentDir)
 	childDir = filepath.Clean(childDir)

@@ -28,7 +28,7 @@ type CoreTasker interface {
 	BuildImage(dockerFilePath string, container *dagger.Container, ctx context.Context) (*dagger.Container, error)
 	PushImage(addr string, container *dagger.Container,
 		dockerFileDir *dagger.Directory, ctx context.Context) error
-	MountDir(targetDir string, client *dagger.Client, container *dagger.
+	MountDir(workDirPath, targetDir string, client *dagger.Client, container *dagger.
 	Container,
 		filesPreRequisites []string, ctx context.Context) (*dagger.Container, error)
 

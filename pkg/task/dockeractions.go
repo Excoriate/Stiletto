@@ -25,7 +25,8 @@ func (a *DockerBuildAction) BuildTagAndPush(dockerFile string) (Output, error) {
 	targetDir := a.Task.GetCoreTask().Dirs.TargetDir
 	preRequiredFiles := []string{"Dockerfile"}
 
-	mountedContainer, err := a.Task.MountDir(targetDir, client, container, preRequiredFiles, ctx)
+	mountedContainer, err := a.Task.MountDir("", targetDir, client, container, preRequiredFiles,
+		ctx)
 	if err != nil {
 		return Output{}, err
 	}

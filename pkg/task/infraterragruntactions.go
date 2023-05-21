@@ -6,6 +6,7 @@ import (
 	"github.com/Excoriate/stiletto/internal/errors"
 	"github.com/Excoriate/stiletto/internal/filesystem"
 	"github.com/Excoriate/stiletto/pkg/config"
+	"path/filepath"
 )
 
 type InfraTerraGruntAction struct {
@@ -70,13 +71,27 @@ func (a *InfraTerraGruntAction) GetOptions() (InfraTerraGruntActionArgs, error) 
 	}
 
 	tgModuleDirValue := tgModuleDirCfg.Value.(string)
-	// Check if module exist.
-	if err := filesystem.DirIsNotEmpty(tgModuleDirValue); err != nil {
-		return InfraTerraGruntActionArgs{}, errors.NewActionCfgError("Failed to run this Terragrunt action, "+
-			"the target module dir is empty.", err)
+	workDirPath := a.Task.GetPipeline().PipelineOpts.WorkDirPath
+
+	// The target module dir should be a relative of the working directory
+	if err := filesystem.IsRelativeChildPath(workDirPath, tgModuleDirValue); err != nil {
+		return InfraTerraGruntActionArgs{}, errors.NewActionCfgError(
+			"Failed to validate the target module directory. "+
+				"The target module passed %s is not a child of the working directory %s. "+
+				"TerraGrunt require a proper git repository to resolve paths", err)
+	}
+
+	// The target module dir should be a valid git repository
+	targetModuleDirWithWorkDir := filepath.Join(workDirPath, tgModuleDirValue)
+	if _, err := filesystem.IsGitRepository(targetModuleDirWithWorkDir, false, true); err != nil {
+		return InfraTerraGruntActionArgs{}, errors.NewActionCfgError(
+			"Failed to validate the target module directory. "+
+				"The target module passed %s is not a git repository. "+
+				"TerraGrunt require a proper git repository to resolve paths", err)
 	}
 
 	args.TargetModuleDir = tgModuleDirValue
+	ux.ShowInfo(a.prefix, "The target module dir is: "+workDirPath)
 
 	// If commands are passed, validate them and use them
 	tgCmds, err := cfg.GetFromViperOrDefault("tg-commands", []string{})
@@ -126,9 +141,9 @@ func (a *InfraTerraGruntAction) RunTGCommand(commands [][]string) (Output, error
 	}
 
 	// Mount required directories.
-	configuredContainer, mntErr := a.Task.MountDir(opts.TargetModuleDir, client,
-		preConfiguredContainer,
-		preRequiredFiles, ctx)
+	workDirPath := a.Task.GetPipeline().PipelineOpts.WorkDirPath
+	configuredContainer, mntErr := a.Task.MountDir(workDirPath, opts.TargetModuleDir, client,
+		preConfiguredContainer, preRequiredFiles, ctx)
 
 	if mntErr != nil {
 		return Output{}, mntErr

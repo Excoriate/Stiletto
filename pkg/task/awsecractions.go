@@ -144,7 +144,7 @@ func (a *AWSECRPushAction) Push() (Output, error) {
 	preRequiredFiles := []string{"Dockerfile"}
 
 	// Mounting dir.
-	containerToUse, err := a.Task.MountDir(targetDir, client, container, preRequiredFiles, ctx)
+	containerToUse, err := a.Task.MountDir("", targetDir, client, container, preRequiredFiles, ctx)
 	if err != nil {
 		return Output{}, err
 	}

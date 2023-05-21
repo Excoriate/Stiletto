@@ -27,29 +27,40 @@ func PathToAbsolute(path string) (string, error) {
 	return absolutePath, nil
 }
 
-func PathGetWorkDirAbsolute(workDir string) (string, error) {
-	var workDirPath string
-	if workDir == "." {
-		wd, err := os.Getwd()
-
-		if err != nil {
-			return "", fmt.Errorf("error getting current working directory: %s", err.Error())
-		}
-
-		workDirPath = wd
-	} else {
-		// if it's a relative path, convert it to an absolute path
-		if !filepath.IsAbs(workDir) {
-			wd, err := os.Getwd()
-			if err != nil {
-				return "", fmt.Errorf("error getting current working directory: %s", err.Error())
-			}
-
-			workDirPath = filepath.Join(wd, workDir)
-		} else {
-			workDirPath = workDir
-		}
+func IsPathAbsolute(path string) error {
+	if !filepath.IsAbs(path) {
+		return fmt.Errorf("path %s is not absolute", path)
 	}
 
-	return workDirPath, nil
+	return nil
+}
+
+func IsPathRelative(path string) error {
+	if filepath.IsAbs(path) {
+		return fmt.Errorf("path %s is not relative", path)
+	}
+
+	return nil
+}
+
+func IsRelativeChildPath(parentPath string, childPath string) error {
+	// Check if the child path is absolute
+	if filepath.IsAbs(childPath) {
+		return fmt.Errorf("child path %s is not relative", childPath)
+	}
+
+	// Resolve the child path relative to the parent path
+	absChildPath := filepath.Join(parentPath, childPath)
+
+	// Check if the absolute child path exists
+	if _, err := os.Stat(absChildPath); os.IsNotExist(err) {
+		return fmt.Errorf("child path %s does not exist", absChildPath)
+	}
+
+	// Check if the absolute child path is indeed a child of the parent path
+	if !filepath.HasPrefix(absChildPath, parentPath) {
+		return fmt.Errorf("child path %s is not a child of parent path %s", absChildPath, parentPath)
+	}
+
+	return nil
 }
