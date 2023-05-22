@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/Excoriate/Stiletto/compare/v0.2.9...v0.2.10) (2023-05-22)
+
+
+### Bug Fixes
+
+* fix set-env functionality ([98a3842](https://github.com/Excoriate/Stiletto/commit/98a3842a8dfcc8873ca08dfc540ecc0f4a8926c3))
+
 ## [0.2.9](https://github.com/Excoriate/Stiletto/compare/v0.2.8...v0.2.9) (2023-05-22)
 
 
