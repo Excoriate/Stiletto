@@ -25,6 +25,8 @@ type CfgRetriever interface {
 	GetFromAny(key string) (CfgValue, error)
 	IsRunningInVendorAutomation() bool
 	ValidateCfgKey(key string) (string, error)
+	GetStringSliceFromViper(key string) (CfgValue, error)
+	GetStringInterfaceMapFromViper(key string) (CfgValue, error)
 }
 
 func (c *Cfg) ValidateCfgKey(key string) (string, error) {
@@ -43,6 +45,20 @@ func (c *Cfg) ValidateCfgKey(key string) (string, error) {
 
 	keyNormalised := common.NormaliseNoSpaces(keyToSeek)
 	return keyNormalised, nil
+}
+
+func (c *Cfg) GetStringSliceFromViper(key string) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
+
+	value := viper.GetStringSlice(keyNormalised)
+	if len(value) == 0 {
+		return CfgValue{Key: keyNormalised, Value: []string{}}, nil
+	}
+
+	return CfgValue{Key: keyNormalised, Value: value}, nil
 }
 
 func (c *Cfg) GetFromViperOrDefault(key string, defaultValue interface{}) (CfgValue, error) {
@@ -100,6 +116,20 @@ func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
 		Key:   keyNormalised,
 		Value: value,
 	}, nil
+}
+
+func (c *Cfg) GetStringInterfaceMapFromViper(key string) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
+
+	value := viper.GetStringMap(keyNormalised)
+	if len(value) == 0 {
+		return CfgValue{Key: keyNormalised, Value: map[string]interface{}{}}, nil
+	}
+
+	return CfgValue{Key: keyNormalised, Value: value}, nil
 }
 
 func (c *Cfg) GetFromEnvVars(key string) (CfgValue, error) {

@@ -29,7 +29,7 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 
 	// 'set-env' option
 	var setEnvValue map[string]interface{}
-	keValuePairsFromViper, err := cfg.GetFromViper("set-env")
+	keValuePairsFromViper, err := cfg.GetStringInterfaceMapFromViper("set-env")
 	if err != nil {
 		setEnvValue = defaultEmptyMap
 	} else {
@@ -38,7 +38,7 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 
 	// 'scan-env' option
 	var scanEnvVarKeys []string
-	scanEnvVarKeysFromViper, err := cfg.GetFromViper("scan-env")
+	scanEnvVarKeysFromViper, err := cfg.GetStringSliceFromViper("scan-env")
 	if err != nil {
 		scanEnvVarKeys = []string{}
 	} else {
@@ -47,7 +47,7 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 
 	// Scan env vars with prefix
 	var scanEnvVarsWithPrefix []string
-	scanEnvVarsWithPrefixFromViper, err := cfg.GetFromViper("scan-env-vars-prefix")
+	scanEnvVarsWithPrefixFromViper, err := cfg.GetStringSliceFromViper("scan-env-vars-prefix")
 	if err != nil {
 		scanEnvVarsWithPrefix = []string{}
 	} else {
