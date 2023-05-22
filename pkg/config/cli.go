@@ -54,26 +54,32 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 		scanEnvVarsWithPrefix = scanEnvVarsWithPrefixFromViper.Value.([]string)
 	}
 
+	envKeyValuePairToSetString := make(map[string]string)
+	if len(setEnvValue) > 0 {
+		for k, v := range setEnvValue {
+			if v != nil {
+				envKeyValuePairToSetString[k] = v.(string)
+			}
+		}
+	}
+
 	args := CLIGlobalArgs{
-		WorkingDir:            viper.GetString("work-dir"),
-		MountDir:              viper.GetString("mount-dir"),
-		TargetDir:             viper.GetString("target-dir"),
-		TaskName:              viper.GetString("task"),
-		ScanEnvVarKeys:        scanEnvVarKeys,
-		EnvKeyValuePairsToSet: setEnvValue,
-		ScanAWSKeys:           viper.GetBool("scan-aws-keys"),
-		ScanTerraformVars:     viper.GetBool("scan-terraform-vars"),
-		ScanEnvVarsWithPrefix: scanEnvVarsWithPrefix,
-		ScanAllEnvVars:        viper.GetBool("scan-all-env-vars"),
-		DotEnvFile:            viper.GetString("dot-env-file"),
+		WorkingDir:                  viper.GetString("work-dir"),
+		MountDir:                    viper.GetString("mount-dir"),
+		TargetDir:                   viper.GetString("target-dir"),
+		TaskName:                    viper.GetString("task"),
+		ScanEnvVarKeys:              scanEnvVarKeys,
+		EnvKeyValuePairsToSet:       setEnvValue,
+		EnvKeyValuePairsToSetString: envKeyValuePairToSetString,
+		ScanAWSKeys:                 viper.GetBool("scan-aws-keys"),
+		ScanTerraformVars:           viper.GetBool("scan-terraform-vars"),
+		ScanEnvVarsWithPrefix:       scanEnvVarsWithPrefix,
+		ScanAllEnvVars:              viper.GetBool("scan-all-env-vars"),
+		DotEnvFile:                  viper.GetString("dot-env-file"),
 		//CustomCommands:                 viper.Get("custom-cmds").([]string),
 		CustomCommands:                 []string{},
 		InitDaggerWithWorkDirByDefault: viper.GetBool("init-dagger-with-workdir"),
 		RunInVendor:                    viper.GetBool("run-in-vendor"),
-	}
-
-	for k, v := range args.EnvKeyValuePairsToSet {
-		args.EnvKeyValuePairsToSetString[k] = v.(string)
 	}
 
 	return args, nil
