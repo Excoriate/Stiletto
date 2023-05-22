@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/Excoriate/Stiletto/compare/v0.2.8...v0.2.9) (2023-05-22)
+
+
+### Bug Fixes
+
+* fix mechanism for obtaining slices and maps from cli options ([1b5a674](https://github.com/Excoriate/Stiletto/commit/1b5a6741833f9161943a5f4be26e44081ef6f961))
+
 ## [0.2.8](https://github.com/Excoriate/Stiletto/compare/v0.2.7...v0.2.8) (2023-05-22)
 
 
