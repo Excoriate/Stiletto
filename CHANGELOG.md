@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.11](https://github.com/Excoriate/Stiletto/compare/v0.2.10...v0.2.11) (2023-05-22)
+
+
+### Bug Fixes
+
+* fix bug trying to fetch ecs task env vars from keys ([08e65ab](https://github.com/Excoriate/Stiletto/commit/08e65ab0e7aa6ce9fb062d7f0d147e855da170d8))
+
 ## [0.2.10](https://github.com/Excoriate/Stiletto/compare/v0.2.9...v0.2.10) (2023-05-22)
 
 
