@@ -100,6 +100,33 @@ func isDotEnvFileValidToScan(isScanFromDotEnvFileEnabled bool, dotEnvFilePath st
 	return nil, nil
 }
 
+func isEnvVarsToScanFromPrefixValid(isScanFromPrefixEnabled bool, envVarsToScanFromPrefix []string) error {
+	if !isScanFromPrefixEnabled {
+		return nil
+	}
+
+	if len(envVarsToScanFromPrefix) == 0 {
+		errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
+			"there is no env vars to scan from prefix: %s", envVarsToScanFromPrefix)
+		return errors.NewPipelineConfigurationError(errMsg, nil)
+	}
+
+	envVarsTo, err := filesystem.ScanEnvVarsFromPrefixes(envVarsToScanFromPrefix)
+	if err != nil {
+		errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
+			"there is no env vars to scan from prefix: %s", envVarsToScanFromPrefix)
+		return errors.NewPipelineConfigurationError(errMsg, err)
+	}
+
+	if len(envVarsTo) == 0 {
+		errMsg := fmt.Sprintf("PipelineCfg cant initialise, "+
+			"there is no env vars to scan from prefix: %s", envVarsToScanFromPrefix)
+		return errors.NewPipelineConfigurationError(errMsg, err)
+	}
+
+	return nil
+}
+
 func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error {
 	ux := tui.TUIMessage{}
 
@@ -168,12 +195,18 @@ func CheckPreConditions(args *config.PipelineOptions, pLog logger.Logger) error 
 		return err
 	}
 
+	if err := isEnvVarsToScanFromPrefixValid(args.IsEnvVarsToScanByPrefix,
+		args.EnvVarsToScanByPrefix); err != nil {
+		ux.ShowError("VALIDATION", "Preconditions failed", err)
+		return err
+	}
+
 	return nil
 }
 
 func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []string,
 	envVarsMapToSet map[string]string, isAWSKeysToScan bool, isTFScanEnabled bool,
-	isAllEnvVarsToScan bool, dotEnvFile string,
+	isAllEnvVarsToScan bool, dotEnvFile string, envVarsToScanByPrefix []string,
 	initDaggerWithWorkDirByDefault bool) (*Config,
 	error) {
 
@@ -185,6 +218,13 @@ func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []strin
 		isEnvVarsToScanFromDotEnvFile = false
 	} else {
 		isEnvVarsToScanFromDotEnvFile = true
+	}
+
+	var isEnvVarsToScanFromPrefix bool
+	if len(envVarsToScanByPrefix) == 0 {
+		isEnvVarsToScanFromPrefix = false
+	} else {
+		isEnvVarsToScanFromPrefix = true
 	}
 
 	args := config.PipelineOptions{
@@ -200,12 +240,14 @@ func New(workDir, mountDir, targetDir, taskName string, envVarKeysToScan []strin
 		EnvKeyValuePairsToSet: envVarsMapToSet,
 		EnvVarsDotEnvFilePath: dotEnvFile,
 		EnvVarsAWSKeysToScan:  map[string]string{},
+		EnvVarsToScanByPrefix: envVarsToScanByPrefix,
 		EnvVarsFromDotEnvFile: map[string]string{},
 		// Scan options
 		IsAWSEnvVarKeysToScanEnabled:   isAWSKeysToScan,
 		IsTerraformVarsScanEnabled:     isTFScanEnabled,
 		InitDaggerWithWorkDirByDefault: initDaggerWithWorkDirByDefault,
 		IsEnvVarsToScanFromDotEnvFile:  isEnvVarsToScanFromDotEnvFile,
+		IsEnvVarsToScanByPrefix:        isEnvVarsToScanFromPrefix, // Scan env vars by prefix.
 		IsAllEnvVarsToScanEnabled:      isAllEnvVarsToScan,
 	}
 

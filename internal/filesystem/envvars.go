@@ -133,9 +133,31 @@ func ScanTerraformEnvVars() (EnvVars, error) {
 	return FetchEnvVarsWithPrefix("TF_VAR_")
 }
 
-// ScanWithCustomPrefix fetches environment variables that start with the specified prefix
-func ScanWithCustomPrefix(prefix string) (EnvVars, error) {
-	return FetchEnvVarsWithPrefix(prefix)
+// ScanEnvVarsFromPrefixes scans the environment variables for the specified prefixes.
+func ScanEnvVarsFromPrefixes(prefixes []string) (EnvVars, error) {
+	if len(prefixes) == 0 {
+		return nil, fmt.Errorf("No prefixes provided")
+	}
+	// Create a second array wioth normalised prefixes.
+	normalisedPrefixes := make([]string, len(prefixes))
+	for i, prefix := range prefixes {
+		normalisedPrefixes[i] = common.NormaliseNoSpaces(prefix)
+	}
+
+	result := make(EnvVars)
+
+	// Use the function FetchEnvVarsWithPrefix to get all the environment variables
+	for _, env := range normalisedPrefixes {
+		envs, err := FetchEnvVarsWithPrefix(env)
+		if err != nil {
+			return nil, err
+		}
+		for key, value := range envs {
+			result[key] = value
+		}
+	}
+
+	return result, nil
 }
 
 // FetchAWSEnvVars fetches environment variables that start with the prefix "AWS_"

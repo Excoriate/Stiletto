@@ -10,6 +10,7 @@ type PipelineOptions struct {
 	TaskName              string
 	EnvVarsDotEnvFilePath string
 	EnvVarsToScanAndSet   []string
+	EnvVarsToScanByPrefix []string
 	EnvKeyValuePairsToSet map[string]string
 	EnvVarsFromDotEnvFile map[string]string
 	EnvVarsAWSKeysToScan  map[string]string
@@ -18,6 +19,7 @@ type PipelineOptions struct {
 	IsTerraformVarsScanEnabled     bool
 	IsAllEnvVarsToScanEnabled      bool
 	IsEnvVarsToScanFromDotEnvFile  bool
+	IsEnvVarsToScanByPrefix        bool
 	InitDaggerWithWorkDirByDefault bool
 }
 

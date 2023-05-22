@@ -96,8 +96,10 @@ func (c *Cfg) GetFromViper(key string) (CfgValue, error) {
 		return CfgValue{Key: keyNormalised, Value: value}, nil
 	}
 
-	return CfgValue{}, errors.NewInternalPipelineError(fmt.Sprintf("Failed to get config ("+
-		"from viper) value for key: %s. It is not found.", keyNormalised))
+	return CfgValue{
+		Key:   keyNormalised,
+		Value: value,
+	}, nil
 }
 
 func (c *Cfg) GetFromEnvVars(key string) (CfgValue, error) {

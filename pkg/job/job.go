@@ -17,12 +17,14 @@ type InitOptions struct {
 	TargetDir string
 
 	// Scanned Environment variables to resolve, and set.
-	ScanAWSEnvVars            bool
-	ScanTerraformEnvVars      bool
-	EnvVarsToSet              map[string]string
-	EnvVarsToScan             []string
-	ScanEnvVarsFromDotEnvFile bool
-	DotEnvFile                string
+	ScanAWSEnvVars          bool
+	ScanTerraformEnvVars    bool
+	EnvVarsToSet            map[string]string
+	EnvVarsToScan           []string
+	EnvVarsWithPrefixToScan []string
+	IsScanEnvVarsFromDotEnv bool
+	IsScanEnvVarsFromPrefix bool
+	DotEnvFile              string
 }
 
 type Job struct {
@@ -51,12 +53,13 @@ type Job struct {
 	ContainerDefault  *dagger.Container
 
 	// Scanned Environment variables to resolve, and set.
-	EnvVarsAWSScanned       map[string]string
-	EnvVarsTerraformScanned map[string]string
-	EnvVarsCustomScanned    map[string]string
-	EnvVarsAllScanned       map[string]string
-	EnvVarsToSet            map[string]string
-	EnvVarsFromDotEnvFile   map[string]string
+	EnvVarsAWSScanned        map[string]string
+	EnvVarsTerraformScanned  map[string]string
+	EnvVarsCustomScanned     map[string]string
+	EnvVarsAllScanned        map[string]string
+	EnvVarsToSet             map[string]string
+	EnvVarsFromDotEnvFile    map[string]string
+	EnvVarsFromPrefixScanned map[string]string
 
 	Ctx context.Context
 }
@@ -70,6 +73,7 @@ type Runner interface {
 	ScanEnvVarsCustom(scanCustomVars []string) (map[string]string, error)
 	ScanAllEnvVars() (map[string]string, error)
 	ScanEnvVarsFromDotEnvFile(dotEnvFile string) (map[string]string, error)
+	ScanEnvVarsFromPrefix(prefixes []string) (map[string]string, error)
 	ValidatedEnvVarsPassed(envVarsToSet map[string]string) (map[string]string, error)
 	BuildRootDir(client *dagger.Client) (*dagger.Directory, error)
 	BuildWorkDir(client *dagger.Client, workDir string) (*dagger.Directory, error)

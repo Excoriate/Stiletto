@@ -15,6 +15,7 @@ type CLIGlobalArgs struct {
 	EnvKeyValuePairsToSetString    map[string]string
 	ScanAWSKeys                    bool
 	ScanTerraformVars              bool
+	ScanEnvVarsWithPrefix          []string
 	DotEnvFile                     string
 	ScanAllEnvVars                 bool
 	CustomCommands                 []string
@@ -44,6 +45,15 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 		scanEnvVarKeys = scanEnvVarKeysFromViper.Value.([]string)
 	}
 
+	// Scan env vars with prefix
+	var scanEnvVarsWithPrefix []string
+	scanEnvVarsWithPrefixFromViper, err := cfg.GetFromViper("scan-env-vars-prefix")
+	if err != nil {
+		scanEnvVarsWithPrefix = []string{}
+	} else {
+		scanEnvVarsWithPrefix = scanEnvVarsWithPrefixFromViper.Value.([]string)
+	}
+
 	args := CLIGlobalArgs{
 		WorkingDir:            viper.GetString("work-dir"),
 		MountDir:              viper.GetString("mount-dir"),
@@ -53,6 +63,7 @@ func GetCLIGlobalArgs() (CLIGlobalArgs, error) {
 		EnvKeyValuePairsToSet: setEnvValue,
 		ScanAWSKeys:           viper.GetBool("scan-aws-keys"),
 		ScanTerraformVars:     viper.GetBool("scan-terraform-vars"),
+		ScanEnvVarsWithPrefix: scanEnvVarsWithPrefix,
 		ScanAllEnvVars:        viper.GetBool("scan-all-env-vars"),
 		DotEnvFile:            viper.GetString("dot-env-file"),
 		//CustomCommands:                 viper.Get("custom-cmds").([]string),

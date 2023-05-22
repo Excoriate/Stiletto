@@ -71,6 +71,12 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		return nil, err
 	}
 
+	// 8. Scan (if applicable) env vars with prefix
+	envVarsFromPrefix, err := i.ScanEnvVarsFromPrefix(new.EnvVarsWithPrefixToScan)
+	if err != nil {
+		return nil, err
+	}
+
 	// 8. Validate and set environment variables.
 	envVarsToSet, err := i.ValidatedEnvVarsPassed(new.EnvVarsToSet)
 	if err != nil {
@@ -126,12 +132,13 @@ func NewJob(p *pipeline.Config, new InitOptions) (*Job, error) {
 		ContainerDefault:  ct,
 
 		// Environment variables
-		EnvVarsAWSScanned:       awsEnvVars,
-		EnvVarsTerraformScanned: terraformEnvVars,
-		EnvVarsCustomScanned:    customEnvVars,
-		EnvVarsToSet:            envVarsToSet,
-		EnvVarsAllScanned:       envVarsAllScanned,
-		EnvVarsFromDotEnvFile:   envVarsFromDotEnv,
+		EnvVarsAWSScanned:        awsEnvVars,
+		EnvVarsTerraformScanned:  terraformEnvVars,
+		EnvVarsCustomScanned:     customEnvVars,
+		EnvVarsToSet:             envVarsToSet,
+		EnvVarsAllScanned:        envVarsAllScanned,
+		EnvVarsFromDotEnvFile:    envVarsFromDotEnv,
+		EnvVarsFromPrefixScanned: envVarsFromPrefix,
 
 		// Directories (dagger format).
 		RootDir:   rootDir,
@@ -291,7 +298,7 @@ func (i *Instance) ScanEnvVarsCustom(scanCustomVars []string) (map[string]string
 func (i *Instance) ScanEnvVarsFromDotEnvFile(dotEnvFile string) (map[string]string, error) {
 	ux := i.InitOptions.PipelineCfg.UXMessage
 
-	if i.InitOptions.ScanEnvVarsFromDotEnvFile {
+	if i.InitOptions.IsScanEnvVarsFromDotEnv {
 		envVars, err := filesystem.GetEnvVarsFromDotFile(dotEnvFile)
 		if err != nil {
 			errMsg := GetErrMsg(i.JobName, i.JobId,
@@ -305,6 +312,26 @@ func (i *Instance) ScanEnvVarsFromDotEnvFile(dotEnvFile string) (map[string]stri
 	}
 
 	ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Skipping env var scan from .env file"))
+	return map[string]string{}, nil
+}
+
+func (i *Instance) ScanEnvVarsFromPrefix(prefixes []string) (map[string]string, error) {
+	ux := i.InitOptions.PipelineCfg.UXMessage
+
+	if i.InitOptions.IsScanEnvVarsFromPrefix {
+		envVars, err := filesystem.ScanEnvVarsFromPrefixes(prefixes)
+		if err != nil {
+			errMsg := GetErrMsg(i.JobName, i.JobId,
+				"Failed to scan env vars from prefix", nil)
+			return nil, errors.NewDaggerEngineError(errMsg, err)
+		}
+
+		ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Env vars scanned successfully from prefix"))
+
+		return envVars, nil
+	}
+
+	ux.ShowInfo(uxPrefix, GetInfoMsg(i.JobName, i.JobId, "Skipping env var scan from prefix"))
 	return map[string]string{}, nil
 }
 
