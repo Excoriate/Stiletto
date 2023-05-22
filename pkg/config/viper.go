@@ -27,6 +27,53 @@ type CfgRetriever interface {
 	ValidateCfgKey(key string) (string, error)
 	GetStringSliceFromViper(key string) (CfgValue, error)
 	GetStringInterfaceMapFromViper(key string) (CfgValue, error)
+	GetStringMapFromViper(key string) (CfgValue, error)
+	GetBoolFromViper(key string) (CfgValue, error)
+	GetStringFromViper(key string) (CfgValue, error)
+}
+
+func (c *Cfg) GetStringMapFromViper(key string) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
+
+	mapToReturn := viper.GetStringMap(keyNormalised)
+
+	// Check each value before pass it to a string value in the final map.
+	for k, v := range mapToReturn {
+		if reflect.TypeOf(v).Kind() != reflect.String {
+			return CfgValue{}, fmt.Errorf("value %s for key %s is not a string", k, keyNormalised)
+		}
+
+		mapToReturn[k] = v.(string)
+	}
+
+	return CfgValue{Key: keyNormalised, Value: mapToReturn}, nil
+}
+
+func (c *Cfg) GetStringFromViper(key string) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
+
+	value := viper.GetString(keyNormalised)
+	if value == "" {
+		return CfgValue{Key: keyNormalised, Value: ""}, nil
+	}
+
+	return CfgValue{Key: keyNormalised, Value: value}, nil
+}
+
+func (c *Cfg) GetBoolFromViper(key string) (CfgValue, error) {
+	keyNormalised, err := c.ValidateCfgKey(key)
+	if err != nil {
+		return CfgValue{}, err
+	}
+
+	value := viper.GetBool(keyNormalised)
+	return CfgValue{Key: keyNormalised, Value: value}, nil
 }
 
 func (c *Cfg) ValidateCfgKey(key string) (string, error) {

@@ -103,7 +103,7 @@ func getDeployActionArgs(log tui.TUIMessenger) (AWSECSDeployActionArgs, error) {
 	var contDefEnvVarScannedByPrefix map[string]string
 
 	// 1. Scan from host.
-	envVarsScanFromHostCfg, err := cfg.GetFromAny("set-env-from-host")
+	envVarsScanFromHostCfg, err := cfg.GetBoolFromViper("set-env-from-host")
 	if err != nil {
 		log.ShowInfo(actionPrefix, "No 'set-env-from-host' found, "+
 			"no environment variables will be scanned from host")
@@ -125,7 +125,7 @@ func getDeployActionArgs(log tui.TUIMessenger) (AWSECSDeployActionArgs, error) {
 	}
 
 	// 2. Scan from specific keys passed.
-	envVarsScanFromKeysCfg, err := cfg.GetFromViper("set-env-from-keys")
+	envVarsScanFromKeysCfg, err := cfg.GetStringSliceFromViper("set-env-from-keys")
 	if err != nil {
 		log.ShowInfo(actionPrefix, "No 'set-env-from-keys' found, "+
 			"no environment variables will be scanned from keys")
@@ -146,7 +146,7 @@ func getDeployActionArgs(log tui.TUIMessenger) (AWSECSDeployActionArgs, error) {
 	}
 
 	// 3. Scan from prefix.
-	envVarsScanFromPrefixCfg, err := cfg.GetFromViper("set-env-vars-with-prefix")
+	envVarsScanFromPrefixCfg, err := cfg.GetStringFromViper("set-env-vars-with-prefix")
 	if err != nil {
 		log.ShowInfo(actionPrefix, "The option 'set-env-vars-with-prefix' is not set, no environment variables will be scanned from prefix")
 	} else {
@@ -154,36 +154,32 @@ func getDeployActionArgs(log tui.TUIMessenger) (AWSECSDeployActionArgs, error) {
 		prefix = common.NormaliseNoSpaces(prefix)
 
 		if prefix == "" {
-			log.ShowError(actionPrefix, "The option 'set-env-vars-with-prefix' is set, "+
-				"however the prefix is empty", nil)
-			return AWSECSDeployActionArgs{}, errors.NewActionCfgError("The option 'set-env-from-prefix' is set, however the prefix is empty", err)
-		}
+			log.ShowInfo(actionPrefix, "The option 'set-env-vars-with-prefix' is set, "+
+				"however the prefix is empty")
+		} else {
+			log.ShowInfo(actionPrefix, fmt.Sprintf("Scanning the environment variables with the prefix '%s'", prefix))
+			scannedEnvVarsWithPrefix, err := filesystem.FetchEnvVarsWithPrefix(prefix)
+			if err != nil {
+				log.ShowError(actionPrefix, "Failed to scan the environment variables with the prefix", err)
+				return AWSECSDeployActionArgs{}, errors.NewActionCfgError("Failed to scan the environment variables with the prefix", err)
+			}
 
-		log.ShowInfo(actionPrefix, fmt.Sprintf("Scanning the environment variables with the prefix '%s'", prefix))
-		scannedEnvVarsWithPrefix, err := filesystem.FetchEnvVarsWithPrefix(prefix)
-		if err != nil {
-			log.ShowError(actionPrefix, "Failed to scan the environment variables with the prefix", err)
-			return AWSECSDeployActionArgs{}, errors.NewActionCfgError("Failed to scan the environment variables with the prefix", err)
+			contDefEnvVarScannedByPrefix = scannedEnvVarsWithPrefix
 		}
-
-		contDefEnvVarScannedByPrefix = scannedEnvVarsWithPrefix
 	}
 
 	// 4. Set custom and directly passed environment variables
-	envVarsSetCustomCfg, err := cfg.GetFromViper("set-env-vars-custom")
+	envVarsSetCustomCfg, err := cfg.GetStringMapFromViper("set-env-vars-custom")
 	if err != nil {
 		log.ShowInfo(actionPrefix, "No 'set-env-vars-custom' found, so no custom environment variables will be set")
 	} else {
-		envVarsSetCustom := envVarsSetCustomCfg.Value.(map[string]string)
-		if len(envVarsSetCustom) == 0 {
+		envVarsSetCustomValue := envVarsSetCustomCfg.Value
+		if len(envVarsSetCustomValue.(map[string]interface{})) == 0 {
 			log.ShowInfo(actionPrefix, "The option 'set-env-vars-custom' is set, "+
 				"however no custom environment variables were passed, no environment variables will be set")
 		} else {
-			for k, v := range envVarsSetCustom {
-				log.ShowInfo(actionPrefix, fmt.Sprintf("Setting the custom environment variable '%s' with the value '%s'", k, v))
-			}
-
-			contDefEnvVarsSetCustom = envVarsSetCustom
+			log.ShowInfo(actionPrefix, "Setting the custom environment variables")
+			contDefEnvVarsSetCustom = envVarsSetCustomValue.(map[string]string)
 		}
 	}
 
