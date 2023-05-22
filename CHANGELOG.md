@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.8](https://github.com/Excoriate/Stiletto/compare/v0.2.7...v0.2.8) (2023-05-22)
+
+
+### Features
+
+* add support for scanning env vars from prefixes, fix bug ([ad8c97a](https://github.com/Excoriate/Stiletto/commit/ad8c97a8c2edb3cc08a3367241471cc5dd64c43f))
+
 ## [0.2.7](https://github.com/Excoriate/Stiletto/compare/v0.2.6...v0.2.7) (2023-05-21)
 
 
